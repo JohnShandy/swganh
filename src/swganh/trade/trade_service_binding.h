@@ -1,4 +1,3 @@
-
 /*
  This file is part of SWGANH. For more information, visit http://swganh.com
  
@@ -19,36 +18,23 @@
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "swganh_binding.h"
+#ifndef SWGANH_TRADE_TRADE_SERVICE_BINDING_H_
+#define SWGANH_TRADE_TRADE_SERVICE_BINDING_H_
+
+#include "swganh/trade/trade_service.h"
+
 #include <boost/python.hpp>
 
+using namespace swganh::trade;
 using namespace boost::python;
 using namespace std;
 
-void exportObject();
-void exportTangible();
-void exportCreature();
-void exportPlayer();
-void exportObjectController();
-void exportOutOfBand();
-void exportVec3();
-void exportQuat();
-void exportSWGANHKernel();
-void exportCombatService();
-void exportTradeService();
-
-BOOST_PYTHON_MODULE(swganh_binding) {
-	docstring_options local_docstring_options(true, true, false);
-
-    exportObject();
-	exportTangible();
-	exportCreature();
-	exportPlayer();
-    exportObjectController();
-	exportVec3();
-	exportQuat();
-    exportOutOfBand();
-    exportSWGANHKernel();
-    exportCombatService();
-	exportTradeService();
+void exportTradeService()
+{
+	class_<::TradeService, std::shared_ptr<::TradeService>, boost::noncopyable>("TradeService", no_init)
+		.def("request_trade", &::TradeService::RequestTrade, "Sends a SecureTrade ObjController to the target.")
+		.def("begin_trade", &::TradeService::BeginTrade, "Sends BeginTradeMessage to both the actor and target.")
+		;
 }
+
+#endif // SWGANH_TRADE_TRADE_SERVICE_BINDING_H_
