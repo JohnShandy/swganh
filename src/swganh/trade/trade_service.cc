@@ -88,7 +88,7 @@ ServiceDescription TradeService::GetServiceDescription()
 {
 	ServiceDescription service_description(
 		"TradeService",
-		"chat",
+		"trade",
 		"0.1",
 		"127.0.0.1",
 		0,
@@ -150,18 +150,15 @@ void TradeService::BeginTrade(
 
 void TradeService::HandleSecureTrade_(
 	const std::shared_ptr<ObjectController>& controller,
-	const swganh::messages::ObjControllerMessage& message)
+	const ObjControllerMessage& message)
 {
 	BOOST_LOG_TRIVIAL(info) << "Handling SecureTrade";
 
 	SecureTrade secure_trade;
 	secure_trade.Deserialize(message.data);
 
-	std::shared_ptr<swganh::object::creature::Creature> actor;
-	actor->SetObjectId(controller->GetId());
-
-	std::shared_ptr<swganh::object::tangible::Tangible> target;
-	target->SetObjectId(secure_trade.target_id);
+	auto actor = static_pointer_cast<swganh::object::creature::Creature>(controller->GetObject());
+	auto target = simulation_service_->GetObjectById<swganh::object::tangible::Tangible>(secure_trade.target_id);
 
 	RequestTrade(actor, target);
 }
@@ -368,7 +365,7 @@ void TradeService::onStart()
 	simulation_service->RegisterControllerHandler(0x00000115,
 		[this] (
 		const std::shared_ptr<ObjectController>& controller,
-		const swganh::messages::ObjControllerMessage& message)
+		const ObjControllerMessage& message)
 	{
 		HandleSecureTrade_(controller, message);
 	});

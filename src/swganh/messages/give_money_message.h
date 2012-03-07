@@ -39,7 +39,7 @@ struct GiveMoneyMessage : public swganh::messages::BaseSwgMessage<GiveMoneyMessa
 	}
 	
 	void onDeserialize(anh::ByteBuffer buffer) {
-		credit_amount = buffer.read<uint64_t>();
+		credit_amount = buffer.read<uint32_t>();
 	}
 };
 

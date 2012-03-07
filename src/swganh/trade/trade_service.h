@@ -49,6 +49,9 @@ namespace swganh {
 namespace object {
 	namespace creature { class Creature; }
 	namespace tangible { class Tangible; }
+}
+namespace simulation {
+	class SimulationService;
 }} // namespace swganh::object
 
 namespace swganh {
@@ -163,6 +166,8 @@ namespace trade {
 			const std::shared_ptr<swganh::connection::ConnectionClient>& client);
 			
 		void onStart();
+
+		std::shared_ptr<swganh::simulation::SimulationService> simulation_service_;
 	};
 
 }} // namespace swganh::trade

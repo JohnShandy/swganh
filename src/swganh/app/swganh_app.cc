@@ -25,6 +25,7 @@
 #include "swganh/simulation/simulation_service.h"
 #include "swganh/galaxy/galaxy_service.h"
 #include "swganh/combat/combat_service.h"
+#include "swganh/trade/trade_service.h"
 
 
 using namespace anh;
@@ -41,6 +42,7 @@ using namespace swganh::connection;
 using namespace swganh::combat;
 using namespace swganh::simulation;
 using namespace swganh::galaxy;
+using namespace swganh::trade;
 
 options_description AppConfig::BuildConfigDescription() {
     options_description desc;
@@ -314,6 +316,10 @@ void SwganhApp::LoadCoreServices_()
 		kernel_->GetServiceManager()->AddService(
             "ChatService", 
             make_shared<ChatService>(kernel_.get()));
+
+		kernel_->GetServiceManager()->AddService(
+			"TradeService",
+			make_shared<TradeService>(kernel_.get()));
 
 		auto simulation_service = make_shared<SimulationService>(kernel_.get());
 		simulation_service->StartScene("corellia");
