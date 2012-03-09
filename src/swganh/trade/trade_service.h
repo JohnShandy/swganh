@@ -22,6 +22,7 @@
 #define SWGANH_TRADE_TRADE_SERVICE_H_
 
 #include <cstdint>
+#include <list>
 #include <memory>
 #include <string>
 
@@ -44,6 +45,8 @@
 #include "swganh/messages/trade_complete_message.h"
 #include "swganh/messages/unaccept_transaction_message.h"
 #include "swganh/messages/verify_trade_message.h"
+
+#include "swganh/trade/trade_session.h"
 
 namespace swganh {
 namespace object {
@@ -163,10 +166,22 @@ namespace trade {
 		
 		void SendVerifyTradeMessage_(
 			const std::shared_ptr<swganh::connection::ConnectionClient>& client);
-			
+		
 		void onStart();
 
 		std::shared_ptr<swganh::simulation::SimulationService> simulation_service_;
+
+		std::list<swganh::trade::TradeSession> TradeSessionList;
+
+		void CreateTradeSession_(
+			uint64_t actor_id,
+			uint64_t target_id);
+
+		void EndTradeSession_(
+			uint64_t actor_id);
+
+		TradeSession GetTradeSessionByActorId_(
+			uint64_t actor_id);
 	};
 
 }} // namespace swganh::trade

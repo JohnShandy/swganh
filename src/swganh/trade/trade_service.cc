@@ -19,6 +19,7 @@
 */
 
 #include "swganh/trade/trade_service.h"
+#include "swganh/trade/trade_session.h"
 
 #ifdef WIN32
 #include <regex>
@@ -114,6 +115,10 @@ void TradeService::BeginTrade(
 	const std::shared_ptr<Creature>& actor,
 	const std::shared_ptr<Creature>& target)
 {
+	TradeSession trade_session;
+	trade_session.actor_id = actor->GetObjectId();
+	trade_session.target_id = target->GetObjectId();
+	
 	SendBeginTradeMessage_(actor->GetController()->GetRemoteClient(), target->GetObjectId());
 	SendBeginTradeMessage_(target->GetController()->GetRemoteClient(), actor->GetObjectId());
 }
@@ -417,4 +422,51 @@ void TradeService::onStart()
 	connection_service->RegisterMessageHandler(&TradeService::HandleRemoveItemMessage_, this);
 	connection_service->RegisterMessageHandler(&TradeService::HandleUnAcceptTransactionMessage_, this);
 	connection_service->RegisterMessageHandler(&TradeService::HandleVerifyTradeMessage_, this);
+}
+
+void TradeService::CreateTradeSession_(
+	uint64_t actor_id,
+	uint64_t target_id,
+	uint32_t actor_trade_credit_amount,
+	uint32_t target_trade_credit_amount,
+	std::list<uint64_t> actor_trade_items,
+	std::list<uint64_t> target_trade_items)
+{
+	TradeSession trade_session;
+	trade_session.actor_id = actor_id;
+	trade_session.target_id = target_id;
+	trade_session.actor_trade_credit_amount = actor_trade_credit_amount;
+	trade_session.target_trade_credit_amount = target_trade_credit_amount;
+	trade_session.actor_trade_items = actor_trade_items;
+	trade_session.target_trade_items = target_trade_items;
+
+	TradeSessionList.push_back(trade_session);
+}
+
+void TradeService::EndTradeSession_(
+	uint64_t actor_id)
+{
+	auto session_ = std::find_if(TradeSessionList.begin(), TradeSessionList.end(), [=](TradeSession& session)
+	{
+		if (session.actor_id == actor_id)
+			return true;
+		else
+			return false;
+	});
+
+	TradeSessionList.erase(session_);
+}
+
+TradeSession TradeService::GetTradeSessionByActorId_(
+	uint64_t actor_id)
+{
+	auto session_ = std::find_if(TradeSessionList.begin(), TradeSessionList.end(), [=](TradeSession& session)
+	{
+		if (session.actor_id == actor_id)
+			return true;
+		else
+			return false;
+	});
+
+	return *session_;
 }

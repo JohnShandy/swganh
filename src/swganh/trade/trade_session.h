@@ -29,7 +29,7 @@
 namespace swganh {
 namespace trade {
 
-	struct TradeSession:
+	struct TradeSession
 	{
 		uint64_t actor_id;
 		uint64_t target_id;
@@ -37,7 +37,14 @@ namespace trade {
 		uint32_t target_trade_credit_amount;
 		std::list<uint64_t> actor_trade_items;
 		std::list<uint64_t> target_trade_items;
-	}
+
+		TradeSession()
+			: actor_id(0)
+			, target_id(0)
+			, actor_trade_credit_amount(0)
+			, target_trade_credit_amount(0)
+		{}
+	};
 
 }} // namespace swganh::trade
 
