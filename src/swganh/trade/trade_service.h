@@ -48,7 +48,6 @@
 namespace swganh {
 namespace object {
 	namespace creature { class Creature; }
-	namespace tangible { class Tangible; }
 }
 namespace simulation {
 	class SimulationService;
@@ -66,11 +65,11 @@ namespace trade {
 
 		void RequestTrade(
 			const std::shared_ptr<swganh::object::creature::Creature>& actor,
-			const std::shared_ptr<swganh::object::tangible::Tangible>& target);
+			const std::shared_ptr<swganh::object::creature::Creature>& target);
 		
 		void BeginTrade(
 			const std::shared_ptr<swganh::object::creature::Creature>& actor,
-			const std::shared_ptr<swganh::object::tangible::Tangible>& target);
+			const std::shared_ptr<swganh::object::creature::Creature>& target);
 		
 	private:
 		// Handlers

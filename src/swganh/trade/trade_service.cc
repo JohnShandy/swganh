@@ -37,6 +37,7 @@
 
 #include "swganh/messages/controllers/command_queue_enqueue.h"
 #include "swganh/messages/controllers/secure_trade.h"
+#include "swganh/messages/out_of_band.h"
 
 #include "swganh/messages/abort_trade_message.h"
 #include "swganh/messages/accept_transaction_message.h"
@@ -54,7 +55,6 @@
 #include "swganh/object/object_controller.h"
 #include "swganh/object/creature/creature.h"
 #include "swganh/object/player/player.h"
-#include "swganh/object/tangible/tangible.h"
 
 #include "swganh/command/command_service.h"
 #include "swganh/connection/connection_service.h"
@@ -69,6 +69,7 @@ using namespace swganh::connection;
 using namespace swganh::messages;
 using namespace swganh::messages::controllers;
 using namespace swganh::object;
+using namespace swganh::object::creature;
 using namespace swganh::simulation;
 
 #ifdef WIN32
@@ -99,17 +100,19 @@ ServiceDescription TradeService::GetServiceDescription()
 }
 
 void TradeService::RequestTrade(
-	const std::shared_ptr<swganh::object::creature::Creature>& actor,
-	const std::shared_ptr<swganh::object::tangible::Tangible>& target)
+	const std::shared_ptr<Creature>& actor,
+	const std::shared_ptr<Creature>& target)
 {
-	BOOST_LOG_TRIVIAL(info) << "Requesting Trade";
 	SendSecureTrade_(target->GetController()->GetRemoteClient(), actor->GetObjectId(), target->GetObjectId());
+	//actor->GetController()->SendSystemMessage(OutOfBand("ui_trade", "request_sent_prose"));
+	target->GetController()->SendSystemMessage(OutOfBand("ui_trade", "requested_prose", TU, actor->GetObjectId()));
+
+	BeginTrade(actor, target);
 }
 
 void TradeService::BeginTrade(
-	const std::shared_ptr<swganh::object::creature::Creature>& actor, // creature object
-	const std::shared_ptr<swganh::object::tangible::Tangible>& target // target object
-	)
+	const std::shared_ptr<Creature>& actor,
+	const std::shared_ptr<Creature>& target)
 {
 	SendBeginTradeMessage_(actor->GetController()->GetRemoteClient(), target->GetObjectId());
 	SendBeginTradeMessage_(target->GetController()->GetRemoteClient(), actor->GetObjectId());
@@ -157,10 +160,43 @@ void TradeService::HandleSecureTrade_(
 	SecureTrade secure_trade;
 	secure_trade.Deserialize(message.data);
 
-	auto actor = static_pointer_cast<swganh::object::creature::Creature>(controller->GetObject());
-	auto target = simulation_service_->GetObjectById<swganh::object::tangible::Tangible>(secure_trade.target_id);
+	auto actor = static_pointer_cast<Creature>(controller->GetObject());
+	auto target = simulation_service_->GetObjectById<Creature>(secure_trade.target_id);
 
-	RequestTrade(actor, target);
+	// if target is not a creature, it cannot be traded with
+	if (target == nullptr)
+	{
+		actor->GetController()->SendSystemMessage(OutOfBand("ui_trade", "start_fail_target_not_player"));
+		return;
+	}
+	// actor cannot trade with self, only other players
+	else if (actor->GetObjectId() == target->GetObjectId())
+	{
+		actor->GetController()->SendSystemMessage(OutOfBand("ui_trade", "start_fail_target_not_player"));
+		return;
+	}
+	// trader dead or incapacitated?
+	else if (actor->IsDead() || actor->IsIncapacitated())
+	{
+		actor->GetController()->SendSystemMessage(OutOfBand("error_message", "wrong_state"));
+		return;
+	}
+	// target dead or incapacitated?
+	else if (target->IsDead() || target->IsIncapacitated())
+	{
+		actor->GetController()->SendSystemMessage(OutOfBand("error_message", "wrong_state"));
+		return;
+	}
+
+	// actor and target not in any kind of negative or preoccupied state?
+	if (actor->HasState(NONE) && target->HasState(NONE))
+	{
+		RequestTrade(actor, target);
+	}
+	else
+	{
+		actor->GetController()->SendSystemMessage(OutOfBand("error_message", "wrong_state"));
+	}
 }
 
 // Kronos advised that I don't need this if I am going to
@@ -360,9 +396,9 @@ void TradeService::SendVerifyTradeMessage_(
 void TradeService::onStart()
 {
 	// Register ObjController Handlers with the SimulationService
-	auto simulation_service = std::static_pointer_cast<SimulationService>(kernel()->GetServiceManager()->GetService("SimulationService"));
+	simulation_service_ = std::static_pointer_cast<SimulationService>(kernel()->GetServiceManager()->GetService("SimulationService"));
 
-	simulation_service->RegisterControllerHandler(0x00000115,
+	simulation_service_->RegisterControllerHandler(0x00000115,
 		[this] (
 		const std::shared_ptr<ObjectController>& controller,
 		const ObjControllerMessage& message)
