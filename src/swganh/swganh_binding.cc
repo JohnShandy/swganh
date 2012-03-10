@@ -35,7 +35,6 @@ void exportVec3();
 void exportQuat();
 void exportSWGANHKernel();
 void exportCombatService();
-void exportTradeService();
 
 BOOST_PYTHON_MODULE(py_swganh) {
     docstring_options local_docstring_options(true, true, false);
@@ -50,5 +49,4 @@ BOOST_PYTHON_MODULE(py_swganh) {
     exportOutOfBand();
     exportSWGANHKernel();
     exportCombatService();
-	exportTradeService();
 }

@@ -33,4 +33,3 @@
 // Services
 #include "swganh/app/swganh_kernel_binding.h"
 #include "swganh/combat/combat_service_binding.h"
-#include "swganh/trade/trade_service_binding.h"
