@@ -37,8 +37,9 @@ namespace trade {
 		uint32_t target_trade_credit_amount;
 		std::list<uint64_t> actor_trade_items;
 		std::list<uint64_t> target_trade_items;
-		bool actor_accepted;
-		bool target_accepted;
+		bool trade_request_accepted;
+		bool actor_transaction_accepted;
+		bool target_transaction_accepted;
 		bool actor_verified;
 		bool target_verified;
 		bool server_verified;
@@ -48,8 +49,9 @@ namespace trade {
 			, target_id(0)
 			, actor_trade_credit_amount(0)
 			, target_trade_credit_amount(0)
-			, actor_accepted(false)
-			, target_accepted(false)
+			, trade_request_accepted(false)
+			, actor_transaction_accepted(false)
+			, target_transaction_accepted(false)
 			, actor_verified(false)
 			, target_verified(false)
 			, server_verified(false)

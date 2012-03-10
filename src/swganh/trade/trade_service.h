@@ -51,6 +51,7 @@
 namespace swganh {
 namespace object {
 	namespace creature { class Creature; }
+	namespace tangible { class Tangible; }
 }
 namespace simulation {
 	class SimulationService;
@@ -72,24 +73,19 @@ namespace trade {
 		
 		void BeginTrade(
 			const std::shared_ptr<swganh::object::creature::Creature>& actor,
-			const std::shared_ptr<swganh::object::creature::Creature>& target);
+			const std::shared_ptr<swganh::object::tangible::Tangible>& target);
 		
 	private:
 		// Handlers
-		/*void HandleTrade_(
-			const std::shared_ptr<swganh::object::creature::Creature>& actor, // creature object
-			const std::shared_ptr<swganh::object::tangible::Tangible>& target, // target object
-			const swganh::messages::controllers::CommandQueueEnqueue& command);*/
-
+		void HandleTradeAccept_(
+			const std::shared_ptr<swganh::object::creature::Creature>& actor,
+			const std::shared_ptr<swganh::object::tangible::Tangible>& target,
+			const swganh::messages::controllers::CommandQueueEnqueue& command);
+		
 		void HandleSecureTrade_(
 			const std::shared_ptr<swganh::object::ObjectController>& controller,
 			const swganh::messages::ObjControllerMessage& message);
 
-		/*void HandleTradeAccept_(
-			const std::shared_ptr<swganh::object::creature::Creature>& actor, // creature object
-			const std::shared_ptr<swganh::object::tangible::Tangible>& target, // target object
-			const swganh::messages::controllers::CommandQueueEnqueue& command);*/
-		
 		void HandleAbortTradeMessage_(
 			const std::shared_ptr<swganh::connection::ConnectionClient>& client,
 			const swganh::messages::AbortTradeMessage& message);
@@ -180,8 +176,12 @@ namespace trade {
 		void EndTradeSession_(
 			uint64_t actor_id);
 
-		swganh::trade::TradeSession GetTradeSessionByActorId_(
+		swganh::trade::TradeSession GetTradeSession_(
 			uint64_t actor_id);
+
+		std::shared_ptr<swganh::object::creature::Creature> GetTradePartner_(
+			const std::shared_ptr<swganh::connection::ConnectionClient>& client,
+			swganh::trade::TradeSession trade_session);
 	};
 
 }} // namespace swganh::trade

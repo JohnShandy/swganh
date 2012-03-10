@@ -28,6 +28,7 @@
 #endif
 
 #include <boost/log/trivial.hpp>
+#include <stdexcept>
 
 #include "anh/app/kernel_interface.h"
 #include "anh/network/soe/session.h"
@@ -55,6 +56,7 @@
 #include "swganh/object/object.h"
 #include "swganh/object/object_controller.h"
 #include "swganh/object/creature/creature.h"
+#include "swganh/object/tangible/tangible.h"
 #include "swganh/object/player/player.h"
 
 #include "swganh/command/command_service.h"
@@ -71,6 +73,7 @@ using namespace swganh::messages;
 using namespace swganh::messages::controllers;
 using namespace swganh::object;
 using namespace swganh::object::creature;
+using namespace swganh::object::tangible;
 using namespace swganh::simulation;
 
 #ifdef WIN32
@@ -108,51 +111,30 @@ void TradeService::RequestTrade(
 	//actor->GetController()->SendSystemMessage(OutOfBand("ui_trade", "request_sent_prose"));
 	target->GetController()->SendSystemMessage(OutOfBand("ui_trade", "requested_prose", TU, actor->GetObjectId()));
 
-	BeginTrade(actor, target);
+	StartTradeSession_(actor->GetObjectId(), target->GetObjectId());
 }
 
 void TradeService::BeginTrade(
 	const std::shared_ptr<Creature>& actor,
-	const std::shared_ptr<Creature>& target)
-{
-	StartTradeSession_(actor->GetObjectId(), target->GetObjectId());
-	
+	const std::shared_ptr<Tangible>& target)
+{	
 	SendBeginTradeMessage_(actor->GetController()->GetRemoteClient(), target->GetObjectId());
 	SendBeginTradeMessage_(target->GetController()->GetRemoteClient(), actor->GetObjectId());
 }
 
 // Handlers
-
-// Kronos advised that I don't need this if I am going to
-// go with a python script as my handler.
-/*void TradeService::HandleTrade_(
-	const std::shared_ptr<swganh::object::creature::Creature>& actor, // creature object
-	const std::shared_ptr<swganh::object::tangible::Tangible>& target, // target object
+void TradeService::HandleTradeAccept_(
+	const std::shared_ptr<swganh::object::creature::Creature>& actor,
+	const std::shared_ptr<swganh::object::tangible::Tangible>& target,
 	const swganh::messages::controllers::CommandQueueEnqueue& command)
 {
-	
-		So, I'm not quite certain what I should do with the CQE object that
-		gets passed to this handler. Other than the "target," there are no
-		command parameters that I need to parse out from the /trade CQE. I'm not
-		even sure that it needs to be passed to this handler, but I am
-		kind of following along with chat_service & combat_service as
-		my examples.
-	
-	
-	SecureTrade secure_trade;
-	secure_trade.trader_id = actor->GetObjectId();
-	
-	if (target)
+	auto trade_session = GetTradeSession_(actor->GetObjectId());
+	if (!trade_session.trade_request_accepted)
 	{
-		secure_trade.target_id = target->GetObjectId();
+		trade_session.trade_request_accepted = true;
+		BeginTrade(actor, target);
 	}
-
-	// I know that the server is supposed to receive this object controller from the actor,
-	// and also send it to the target, but i'm not sure if the trader and target IDs should be swapped
-	// or left as they are in the one the server receives. So, here I send the ObjController as-is to
-	// the target.
-	target->GetController()->GetRemoteClient()->SendTo(ObjControllerMessage(0x0000000B, secure_trade));
-}*/
+}
 
 void TradeService::HandleSecureTrade_(
 	const std::shared_ptr<ObjectController>& controller,
@@ -202,29 +184,18 @@ void TradeService::HandleSecureTrade_(
 	}
 }
 
-// Kronos advised that I don't need this if I am going to
-// go with a python script as my handler.
-/*void TradeService::HandleTradeAccept_(
-	const std::shared_ptr<swganh::object::creature::Creature>& actor, // creature object
-	const std::shared_ptr<swganh::object::tangible::Tangible>& target, // target object
-	const swganh::messages::controllers::CommandQueueEnqueue& command)
-{
-	SendBeginTradeMessage_(actor->GetController()->GetRemoteClient(), target->GetObjectId());
-	SendBeginTradeMessage_(target->GetController()->GetRemoteClient(), actor->GetObjectId());
-}*/
-
 void TradeService::HandleAbortTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const AbortTradeMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 	
-	SendAbortTradeMessage_(target->GetController()->GetRemoteClient());
-	SendTradeCompleteMessage_(target->GetController()->GetRemoteClient()); // Abort needs to be followed with TradeCompleteMessage to end the trade session and close the trade window
+	SendAbortTradeMessage_(trade_partner->GetController()->GetRemoteClient());
+	SendTradeCompleteMessage_(trade_partner->GetController()->GetRemoteClient()); // Abort needs to be followed with TradeCompleteMessage to end the trade session and close the trade window
 
 	client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
-	target->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
+	trade_partner->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
 	
 	EndTradeSession_(client->GetController()->GetObject()->GetObjectId()); // end the TradeSession
 }
@@ -233,14 +204,14 @@ void TradeService::HandleAcceptTransactionMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const AcceptTransactionMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 
-	SendAcceptTransactionMessage_(target->GetController()->GetRemoteClient());
-	client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "waiting_complete_prose", TU, target->GetObjectId()));
+	SendAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+	client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "waiting_complete_prose", TU, trade_partner->GetObjectId()));
 
 	// Set the TradeSession to reflect that the actor has accepted the trade
-	trade_session.actor_accepted = true;
+	trade_session.actor_transaction_accepted = true;
 }
 
 void TradeService::HandleAddItemMessage_(
@@ -259,28 +230,28 @@ void TradeService::HandleAddItemMessage_(
 
 		In addition, the TradeSession should also be set to reflect that the actor has unaccepted the trade.
 	*/
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	/*
 		Some checking should ultimately be done here to make sure the item being added is
 		a tradeable item. If it isn't, the server should send an AddItemFailedMessage to the actor,
 		and refrain from sending an AddItemMessage to the target.
 	*/
-	SendAddItemMessage_(target->GetController()->GetRemoteClient(), message.item_id);
+	SendAddItemMessage_(trade_partner->GetController()->GetRemoteClient(), message.item_id);
 	// When the item can't be added, call SendAddItemFailed_() and send the following OutOfBand package
 	// client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "add_item_failed_prose", TT, item_id));
 
 	// Add the item's ID to the list of item IDs of the actor's trade window contents
 	trade_session.actor_trade_items.push_back(message.item_id);
 
-	if (trade_session.actor_accepted)
+	if (trade_session.actor_transaction_accepted)
 	{
 		// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
-		SendUnAcceptTransactionMessage_(target->GetController()->GetRemoteClient());
+		SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 
 		// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
-		trade_session.actor_accepted = false;
+		trade_session.actor_transaction_accepted = false;
 	}
 }
 
@@ -288,31 +259,31 @@ void TradeService::HandleDenyTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const DenyTradeMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 	
-	SendDenyTradeMessage_(target->GetController()->GetRemoteClient());
+	SendDenyTradeMessage_(trade_partner->GetController()->GetRemoteClient());
 }
 
 void TradeService::HandleGiveMoneyMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const GiveMoneyMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 
-	SendGiveMoneyMessage_(target->GetController()->GetRemoteClient(), message.credit_amount);
+	SendGiveMoneyMessage_(trade_partner->GetController()->GetRemoteClient(), message.credit_amount);
 
 	// Set the actor's credit amount to the amount of credits the actor has committed to the trade window
 	trade_session.actor_trade_credit_amount = message.credit_amount;	
 
-	if (trade_session.actor_accepted)
+	if (trade_session.actor_transaction_accepted)
 	{
 		// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
-		SendUnAcceptTransactionMessage_(target->GetController()->GetRemoteClient());
+		SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 
 		// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
-		trade_session.actor_accepted = false;
+		trade_session.actor_transaction_accepted = false;
 	}
 }
 
@@ -320,21 +291,21 @@ void TradeService::HandleRemoveItemMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const RemoveItemMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 
-	SendRemoveItemMessage_(target->GetController()->GetRemoteClient(), message.item_id);
+	SendRemoveItemMessage_(trade_partner->GetController()->GetRemoteClient(), message.item_id);
 
 	// Remove the item's ID from the list of item IDs of the actor's trade window contents
 	trade_session.actor_trade_items.remove(message.item_id);
 
-	if (trade_session.actor_accepted)
+	if (trade_session.actor_transaction_accepted)
 	{
 		// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
-		SendUnAcceptTransactionMessage_(target->GetController()->GetRemoteClient());
+		SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 
 		// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
-		trade_session.actor_accepted = false;
+		trade_session.actor_transaction_accepted = false;
 	}
 }
 
@@ -342,41 +313,41 @@ void TradeService::HandleUnAcceptTransactionMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const UnAcceptTransactionMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 
-	SendUnAcceptTransactionMessage_(target->GetController()->GetRemoteClient());
+	SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 
 	// Set the TradeSession to reflect that the actor has unaccepted the trade
-	trade_session.actor_accepted = false;
+	trade_session.actor_transaction_accepted = false;
 }
 
 void TradeService::HandleVerifyTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const VerifyTradeMessage& message)
 {
-	auto trade_session = GetTradeSessionByActorId_(client->GetController()->GetObject()->GetObjectId());
-	auto target = simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	// Determine which party is verifying
 	if (client->GetController()->GetObject()->GetObjectId() == trade_session.actor_id)
-		trade_session.actor_accepted = true;
+		trade_session.actor_verified = true;
 	else if (client->GetController()->GetObject()->GetObjectId() == trade_session.target_id)
-		trade_session.target_accepted = true;
+		trade_session.target_verified = true;
 
-	if (trade_session.actor_accepted == true && trade_session.target_accepted == true)
+	if (trade_session.actor_verified == true && trade_session.target_verified == true)
 	{
 		// Do everything necessary to complete the trade. (Needs item management)
 
 		SendTradeCompleteMessage_(client);
-		SendTradeCompleteMessage_(target->GetController()->GetRemoteClient());
+		SendTradeCompleteMessage_(trade_partner->GetController()->GetRemoteClient());
 		client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "complete"));
-		target->GetController()->SendSystemMessage(OutOfBand("ui_trade", "complete"));
+		trade_partner->GetController()->SendSystemMessage(OutOfBand("ui_trade", "complete"));
 	}
 	else
 	{
 		SendDenyTradeMessage_(client);
-		SendDenyTradeMessage_(target->GetController()->GetRemoteClient());
+		SendDenyTradeMessage_(trade_partner->GetController()->GetRemoteClient());
 	}
 }
 
@@ -504,6 +475,19 @@ void TradeService::onStart()
 	connection_service->RegisterMessageHandler(&TradeService::HandleRemoveItemMessage_, this);
 	connection_service->RegisterMessageHandler(&TradeService::HandleUnAcceptTransactionMessage_, this);
 	connection_service->RegisterMessageHandler(&TradeService::HandleVerifyTradeMessage_, this);
+
+	// Register CommandQueueEnqueue Handlers with the CommandService
+	auto command_service = std::static_pointer_cast<CommandService>(kernel()->GetServiceManager()->GetService("CommandService"));
+
+	command_service->SetCommandHandler(0x993190CA,
+		[this] (
+		anh::app::KernelInterface* kernel,
+		const std::shared_ptr<Creature>& actor,
+		const std::shared_ptr<Tangible>& target,
+		const CommandQueueEnqueue& command)
+	{
+		HandleTradeAccept_(actor, target, command);
+	});
 }
 
 void TradeService::StartTradeSession_(
@@ -531,16 +515,32 @@ void TradeService::EndTradeSession_(
 	TradeSessionList.erase(session_);
 }
 
-TradeSession TradeService::GetTradeSessionByActorId_(
-	uint64_t actor_id)
+// This gets a TradeSession in TradeSessionList whether the ObjectId is of the actor or the target
+TradeSession TradeService::GetTradeSession_(
+	uint64_t object_id)
 {
 	auto session_ = std::find_if(TradeSessionList.begin(), TradeSessionList.end(), [=](TradeSession& session)
 	{
-		if (session.actor_id == actor_id)
+		if (session.actor_id == object_id || session.target_id == object_id)
 			return true;
 		else
 			return false;
 	});
 
-	return *session_;
+	if (session_ == TradeSessionList.end())
+		throw std::invalid_argument("Invalid argument: Provide a proper actor_id to get a TradeSession from the TradeSessionList.");
+	else
+		return *session_;
+}
+
+std::shared_ptr<Creature> TradeService::GetTradePartner_(
+	const std::shared_ptr<ConnectionClient>& client,
+	TradeSession trade_session)
+{	
+	// if the client is the actor, return the target creature
+	if (client->GetController()->GetObject()->GetObjectId() == trade_session.actor_id)
+		return simulation_service_->GetObjectById<Creature>(trade_session.target_id);
+	// else the client must be the target, return the actor creature
+	else
+		return simulation_service_->GetObjectById<Creature>(trade_session.actor_id);
 }
