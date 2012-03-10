@@ -151,7 +151,7 @@ void TradeService::BeginTrade(
 	// and also send it to the target, but i'm not sure if the trader and target IDs should be swapped
 	// or left as they are in the one the server receives. So, here I send the ObjController as-is to
 	// the target.
-	target->GetController()->GetRemoteClient()->SendMessage(ObjControllerMessage(0x0000000B, secure_trade));
+	target->GetController()->GetRemoteClient()->SendTo(ObjControllerMessage(0x0000000B, secure_trade));
 }*/
 
 void TradeService::HandleSecureTrade_(
@@ -389,7 +389,7 @@ void TradeService::SendSecureTrade_(
 	SecureTrade secure_trade;
 	secure_trade.trader_id = trader_id;
 	secure_trade.target_id = target_id;
-	client->SendMessage(ObjControllerMessage(0x0000000B, secure_trade));
+	client->SendTo(ObjControllerMessage(0x0000000B, secure_trade));
 }
 
 // Senders
@@ -397,14 +397,14 @@ void TradeService::SendAbortTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client)
 {
 	AbortTradeMessage abort_trade_message;
-	client->SendMessage(abort_trade_message);
+	client->SendTo(abort_trade_message);
 }
 
 void TradeService::SendAcceptTransactionMessage_(
 	const std::shared_ptr<ConnectionClient>& client)
 {
 	AcceptTransactionMessage accept_transaction_message;
-	client->SendMessage(accept_transaction_message);
+	client->SendTo(accept_transaction_message);
 }
 
 void TradeService::SendAddItemFailedMessage_(
@@ -413,7 +413,7 @@ void TradeService::SendAddItemFailedMessage_(
 {
 	AddItemFailedMessage add_item_failed_message;
 	add_item_failed_message.item_id = item_id;
-	client->SendMessage(add_item_failed_message);
+	client->SendTo(add_item_failed_message);
 }
 
 void TradeService::SendAddItemMessage_(
@@ -422,7 +422,7 @@ void TradeService::SendAddItemMessage_(
 {
 	AddItemMessage add_item_message;
 	add_item_message.item_id = item_id;
-	client->SendMessage(add_item_message);
+	client->SendTo(add_item_message);
 }
 
 void TradeService::SendBeginTradeMessage_(
@@ -431,14 +431,14 @@ void TradeService::SendBeginTradeMessage_(
 {
 	BeginTradeMessage begin_trade_message;
 	begin_trade_message.target_id = target_id;
-	client->SendMessage(begin_trade_message);
+	client->SendTo(begin_trade_message);
 }
 
 void TradeService::SendDenyTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client)
 {
 	DenyTradeMessage deny_trade_message;
-	client->SendMessage(deny_trade_message);
+	client->SendTo(deny_trade_message);
 }
 
 void TradeService::SendGiveMoneyMessage_(
@@ -447,7 +447,7 @@ void TradeService::SendGiveMoneyMessage_(
 {
 	GiveMoneyMessage give_money_message;
 	give_money_message.credit_amount = credit_amount;
-	client->SendMessage(give_money_message);
+	client->SendTo(give_money_message);
 }
 
 void TradeService::SendRemoveItemMessage_(
@@ -456,28 +456,28 @@ void TradeService::SendRemoveItemMessage_(
 {
 	RemoveItemMessage remove_item_message;
 	remove_item_message.item_id = item_id;
-	client->SendMessage(remove_item_message);
+	client->SendTo(remove_item_message);
 }
 
 void TradeService::SendTradeCompleteMessage_(
 	const std::shared_ptr<ConnectionClient>& client)
 {
 	TradeCompleteMessage trade_complete_message;
-	client->SendMessage(trade_complete_message);
+	client->SendTo(trade_complete_message);
 }
 
 void TradeService::SendUnAcceptTransactionMessage_(
 	const std::shared_ptr<ConnectionClient>& client)
 {
 	UnAcceptTransactionMessage unaccept_transaction_message;
-	client->SendMessage(unaccept_transaction_message);
+	client->SendTo(unaccept_transaction_message);
 }
 
 void TradeService::SendVerifyTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client)
 {
 	VerifyTradeMessage verify_trade_message;
-	client->SendMessage(verify_trade_message);
+	client->SendTo(verify_trade_message);
 }
 
 void TradeService::onStart()
