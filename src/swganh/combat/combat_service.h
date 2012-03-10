@@ -10,7 +10,16 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/python.hpp>
 
+#ifdef WIN32
 #include <concurrent_unordered_map.h>
+#else
+#include <tbb/concurrent_unordered_map.h>
+
+namespace Concurrency {
+    using ::tbb::concurrent_unordered_map;
+}
+
+#endif
 
 #include "anh/delayed_task_processor.h"
 #include "anh/random_generator.h"
@@ -19,12 +28,6 @@
 #include "swganh/command/command_properties.h"
 #include "swganh/messages/controllers/command_queue_enqueue.h"
 
-
-//namespace boost {
-//namespace python {
-//namespace api {
-//    class object;
-//}}}
 
 namespace swganh {
 namespace simulation {

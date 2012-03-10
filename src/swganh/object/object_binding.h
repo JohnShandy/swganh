@@ -1,6 +1,6 @@
 /*
  This file is part of SWGANH. For more information, visit http://swganh.com
- 
+
  Copyright (c) 2006 - 2011 The SWG:ANH Team
 
  This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 
 #include "swganh/object/object.h"
 #include "swganh/object/object_controller_binding.h"
-#include "swganh/python_shared_ptr.h"
 
 #include <boost/python.hpp>
 
@@ -41,7 +40,9 @@ struct ObjectWrapper : Object, wrapper<Object>
 void exportObject()
 {
     //std::shared_ptr<ObjectController> (ObjectWrapper::*GetControllerPtr)() = &ObjectWrapper::GetController;
-        
+
+    typedef void (ObjectWrapper::*NotifyObserversFunc)(const anh::ByteBuffer& message);
+
     class_<ObjectWrapper, boost::noncopyable>("Object", "The Base SWG Object that all Objects inherit from", no_init)
 		.add_property("id", &ObjectWrapper::GetObjectId, "Gets The id of the object")
 		.add_property("scene_id", &ObjectWrapper::GetSceneId, "Gets the scene id the object is in")
@@ -54,7 +55,7 @@ void exportObject()
 							)
 							, &ObjectWrapper::SetTemplate, "the .iff file associated with this object"
 					)
-		.add_property("volume", &ObjectWrapper::GetVolume, &ObjectWrapper::SetVolume, 
+		.add_property("volume", &ObjectWrapper::GetVolume, &ObjectWrapper::SetVolume,
 						"Property to get or set the volume of the object (how much it can store)"
 					)
 		.add_property("stf_name_file", make_function(
@@ -70,7 +71,7 @@ void exportObject()
 								&ObjectWrapper::GetCustomName, return_value_policy<copy_const_reference>()
 							), &ObjectWrapper::SetCustomName, "Property to get and set the custom name"
 					)
-		.def("NotifyObservers", &ObjectWrapper::NotifyObservers, "Notifies Observers of the passed in message")
+		.def("NotifyObservers", NotifyObserversFunc(&ObjectWrapper::NotifyObservers), "Notifies Observers of the passed in message")
         .def("Controller", &ObjectWrapper::GetController, "Get the :class:`.ObjectController` of the object")
 		;
 }

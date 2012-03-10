@@ -1,6 +1,6 @@
 /*
  This file is part of SWGANH. For more information, visit http://swganh.com
- 
+
  Copyright (c) 2006 - 2011 The SWG:ANH Team
 
  This program is free software; you can redistribute it and/or
@@ -26,11 +26,21 @@
 #include <memory>
 #include <vector>
 
+#ifdef WIN32
 #include <concurrent_queue.h>
+#else
+#include <tbb/concurrent_queue.h>
+
+namespace Concurrency {
+    using ::tbb::concurrent_queue;
+}
+
+#endif
 
 #include <boost/asio.hpp>
 
 #include "anh/network/soe/protocol_packets.h"
+#include "anh/network/soe/server_interface.h"
 
 #include "anh/network/soe/filters/crc_in_filter.h"
 #include "anh/network/soe/filters/decryption_filter.h"
@@ -40,10 +50,6 @@
 #include "anh/network/soe/filters/encryption_filter.h"
 #include "anh/network/soe/filters/security_filter.h"
 
-#ifdef SendMessage
-#undef SendMessage
-#endif
-
 namespace anh {
 
 // FORWARD DECLARATIONS
@@ -52,10 +58,8 @@ class ByteBuffer;
 namespace network {
 namespace soe {
 
-    class ServerInterface;
-
 /**
- * \brief An estabilished connection between a SOE Client and a SOE Service.
+ * @brief An estabilished connection between a SOE Client and a SOE Service.
  */
 class Session : public std::enable_shared_from_this<Session> {
 public:
@@ -66,7 +70,7 @@ public:
     ~Session();
 
     /**
-    * \return The current send sequence for the server.
+    * @return The current send sequence for the server.
     */
     uint16_t server_sequence() const;
 
@@ -83,14 +87,14 @@ public:
      * Set the crc length for footers
      */
     void crc_length(uint32_t crc_length);
-    
+
     /**
      * Sets the crc seed used to encrypt this session's messages.
      */
     void crc_seed(uint32_t crc_seed);
 
     /**
-     * \return The crc seed used to encrypt this session's messages.
+     * @return The crc seed used to encrypt this session's messages.
      */
     uint32_t crc_seed() const;
 
@@ -98,35 +102,35 @@ public:
      * Get a list of all outgoing data channel messages that have not yet been acknowledged
      * by the remote end.
      *
-     * \return List of unacknowledged data channel messages.
+     * @return List of unacknowledged data channel messages.
      */
-    std::vector<std::shared_ptr<anh::ByteBuffer>> GetUnacknowledgedMessages() const;    
+    std::vector<std::shared_ptr<anh::ByteBuffer>> GetUnacknowledgedMessages() const;
 
     /**
     * Sends a data channel message to the remote client.
     *
-    * Increases the server sequence count by 1 for each individual packet sent to the 
-    * remote end. This call can result in multiple packets being generated depending on 
+    * Increases the server sequence count by 1 for each individual packet sent to the
+    * remote end. This call can result in multiple packets being generated depending on
     * the size of the payload and whether or not it needs to be fragmented.
     *
-    * \param message The payload to send in the data channel message(s).
+    * @param message The payload to send in the data channel message(s).
     */
-    void SendMessage(anh::ByteBuffer message);
-    
+    void SendTo(anh::ByteBuffer message);
+
     /**
     * Sends a data channel message to the remote client.
     *
-    * Increases the server sequence count by 1 for each individual packet sent to the 
-    * remote end. This call can result in multiple packets being generated depending on 
+    * Increases the server sequence count by 1 for each individual packet sent to the
+    * remote end. This call can result in multiple packets being generated depending on
     * the size of the payload and whether or not it needs to be fragmented.
     *
-    * \param message The payload to send in the data channel message(s).
+    * @param message The payload to send in the data channel message(s).
     */
     template<typename T>
-    void SendMessage(const T& message) {
+    void SendTo(const T& message) {
         auto message_buffer = server_->AllocateBuffer();
         message.serialize(*message_buffer);
-        
+
         outgoing_data_messages_.push(message_buffer);
     }
 
@@ -157,8 +161,8 @@ private:
 
     typedef anh::ByteBuffer(*HeaderBuilder)(uint16_t);
 
-    void SendSequencedMessage_(HeaderBuilder header_builder, ByteBuffer message);    
-    
+    void SendSequencedMessage_(HeaderBuilder header_builder, ByteBuffer message);
+
     virtual void OnClose() {}
 
     void handleSessionRequest_(SessionRequest& packet);
@@ -178,7 +182,7 @@ private:
     boost::asio::ip::udp::endpoint		remote_endpoint_; // ip_address
     ServerInterface*					server_; // owner
     boost::asio::strand strand_;
-    
+
     SequencedMessageMap					sent_messages_;
 
     bool								connected_;
@@ -205,7 +209,7 @@ private:
     std::list<anh::ByteBuffer>			incoming_fragmented_messages_;
     uint16_t							incoming_fragmented_total_len_;
     uint16_t							incoming_fragmented_curr_len_;
-    
+
     filters::CompressionFilter compression_filter_;
     filters::CrcInFilter crc_input_filter_;
     filters::CrcOutFilter crc_output_filter_;

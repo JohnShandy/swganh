@@ -12,10 +12,9 @@
 #include <boost/regex.hpp>
     using boost::regex;
     using boost::regex_search;
+    using boost::smatch;
 #else
     #include <regex>
-    using std::regex;
-    using std::regex_search;
 #endif
 
 using namespace std;
@@ -64,7 +63,7 @@ void ObjectController::SetRemoteClient(shared_ptr<ConnectionClient> remote_clien
 
 void ObjectController::Notify(const anh::ByteBuffer& message)
 {
-    client_->SendMessage(message);
+    client_->SendTo(message);
 }
 
 bool ObjectController::SendSystemMessage(const wstring& custom_message, bool chatbox_only, bool send_to_inrange)
@@ -104,7 +103,7 @@ bool ObjectController::SendSystemMessage_(const wstring& custom_message, const O
     {
         SystemMessage.AddProsePackage(prose.Pack());
     }
-        
+
     if (send_to_inrange)
         object_->NotifyObservers(SystemMessage);
     else
@@ -155,7 +154,7 @@ void ObjectController::SendFlyText(const std::string& fly_text, FlyTextColor col
         }
         fly_text.display_flag = (display_flag == true) ? 0 : 1;
         object_->NotifyObservers(ObjControllerMessage(0x1B, fly_text));
-        
+
     }
 }
 void ObjectController::SendFlyText(const std::string& fly_text, FlyTextColor color)
