@@ -173,14 +173,14 @@ namespace trade {
 
 		std::list<swganh::trade::TradeSession> TradeSessionList;
 
-		void CreateTradeSession_(
+		void StartTradeSession_(
 			uint64_t actor_id,
 			uint64_t target_id);
 
 		void EndTradeSession_(
 			uint64_t actor_id);
 
-		TradeSession GetTradeSessionByActorId_(
+		swganh::trade::TradeSession GetTradeSessionByActorId_(
 			uint64_t actor_id);
 	};
 
