@@ -86,7 +86,7 @@ using boost::wsmatch;
 using boost::regex_match;
 #endif
 
-TradeService::TradeService(KernelInterface* kernel) : BaseService(kernel)
+TradeService::TradeService(KernelInterface* kernel) : BaseService(kernel), TradeSessionList()
 {}
 
 ServiceDescription TradeService::GetServiceDescription()
@@ -536,7 +536,7 @@ bool TradeService::TradeSessionExists_(
 	});
 
 	if (session_ == TradeSessionList.end())
-		throw std::invalid_argument("Invalid argument: Provide a proper object_id to get a TradeSession from the TradeSessionList.");
+		return false;
 	else
 		return true;
 }
