@@ -73,7 +73,7 @@ namespace trade {
 		
 		void BeginTrade(
 			const std::shared_ptr<swganh::object::creature::Creature>& actor,
-			const std::shared_ptr<swganh::object::tangible::Tangible>& target);
+			const std::shared_ptr<swganh::object::creature::Creature>& target);
 		
 	private:
 		// Handlers
@@ -176,8 +176,11 @@ namespace trade {
 		void EndTradeSession_(
 			uint64_t actor_id);
 
+		bool TradeSessionExists_(
+			uint64_t object_id);
+
 		swganh::trade::TradeSession GetTradeSession_(
-			uint64_t actor_id);
+			uint64_t object_id);
 
 		std::shared_ptr<swganh::object::creature::Creature> GetTradePartner_(
 			const std::shared_ptr<swganh::connection::ConnectionClient>& client,

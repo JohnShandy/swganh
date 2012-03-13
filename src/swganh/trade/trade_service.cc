@@ -107,47 +107,6 @@ void TradeService::RequestTrade(
 	const std::shared_ptr<Creature>& actor,
 	const std::shared_ptr<Creature>& target)
 {
-	SendSecureTrade_(target->GetController()->GetRemoteClient(), actor->GetObjectId(), target->GetObjectId());
-	//actor->GetController()->SendSystemMessage(OutOfBand("ui_trade", "request_sent_prose"));
-	target->GetController()->SendSystemMessage(OutOfBand("ui_trade", "requested_prose", TU, actor->GetObjectId()));
-
-	StartTradeSession_(actor->GetObjectId(), target->GetObjectId());
-}
-
-void TradeService::BeginTrade(
-	const std::shared_ptr<Creature>& actor,
-	const std::shared_ptr<Tangible>& target)
-{	
-	SendBeginTradeMessage_(actor->GetController()->GetRemoteClient(), target->GetObjectId());
-	SendBeginTradeMessage_(target->GetController()->GetRemoteClient(), actor->GetObjectId());
-}
-
-// Handlers
-void TradeService::HandleTradeAccept_(
-	const std::shared_ptr<swganh::object::creature::Creature>& actor,
-	const std::shared_ptr<swganh::object::tangible::Tangible>& target,
-	const swganh::messages::controllers::CommandQueueEnqueue& command)
-{
-	auto trade_session = GetTradeSession_(actor->GetObjectId());
-	if (!trade_session.trade_request_accepted)
-	{
-		trade_session.trade_request_accepted = true;
-		BeginTrade(actor, target);
-	}
-}
-
-void TradeService::HandleSecureTrade_(
-	const std::shared_ptr<ObjectController>& controller,
-	const ObjControllerMessage& message)
-{
-	BOOST_LOG_TRIVIAL(info) << "Handling SecureTrade";
-
-	SecureTrade secure_trade;
-	secure_trade.Deserialize(message.data);
-
-	auto actor = static_pointer_cast<Creature>(controller->GetObject());
-	auto target = simulation_service_->GetObjectById<Creature>(secure_trade.target_id);
-
 	// if target is not a creature, it cannot be traded with
 	if (target == nullptr)
 	{
@@ -176,11 +135,60 @@ void TradeService::HandleSecureTrade_(
 	// actor and target not in any kind of negative or preoccupied state?
 	if (actor->HasState(NONE) && target->HasState(NONE))
 	{
-		RequestTrade(actor, target);
+		SendSecureTrade_(target->GetController()->GetRemoteClient(), actor->GetObjectId(), target->GetObjectId());
+		target->GetController()->SendSystemMessage(OutOfBand("ui_trade", "requested_prose", TU, actor->GetObjectId()));
 	}
 	else
 	{
 		actor->GetController()->SendSystemMessage(OutOfBand("error_message", "wrong_state"));
+	}
+}
+
+void TradeService::BeginTrade(
+	const std::shared_ptr<Creature>& actor,
+	const std::shared_ptr<Creature>& target)
+{	
+	SendBeginTradeMessage_(actor->GetController()->GetRemoteClient(), target->GetObjectId());
+	SendBeginTradeMessage_(target->GetController()->GetRemoteClient(), actor->GetObjectId());
+}
+
+// Handlers
+void TradeService::HandleTradeAccept_(
+	const std::shared_ptr<swganh::object::creature::Creature>& actor,
+	const std::shared_ptr<swganh::object::tangible::Tangible>& target,
+	const swganh::messages::controllers::CommandQueueEnqueue& command)
+{
+	//
+}
+
+void TradeService::HandleSecureTrade_(
+	const std::shared_ptr<ObjectController>& controller,
+	const ObjControllerMessage& message)
+{
+	BOOST_LOG_TRIVIAL(info) << "Handling SecureTrade";
+
+	SecureTrade secure_trade;
+	secure_trade.Deserialize(message.data);
+
+	if (TradeSessionExists_(controller->GetObject()->GetObjectId()))
+	{
+		auto trade_session = GetTradeSession_(controller->GetObject()->GetObjectId());
+
+		if (controller->GetObject()->GetObjectId() == trade_session.target_id)
+		{	
+			BeginTrade(
+				GetTradePartner_(controller->GetRemoteClient(), trade_session), // actor
+				simulation_service_->GetObjectById<Creature>(controller->GetObject()->GetObjectId()) // target
+				);
+		}
+	}
+	else
+	{
+		StartTradeSession_(controller->GetObject()->GetObjectId(), secure_trade.target_id);
+		RequestTrade(
+			simulation_service_->GetObjectById<Creature>(secure_trade.trader_id),
+			simulation_service_->GetObjectById<Creature>(secure_trade.target_id)
+			);
 	}
 }
 
@@ -515,6 +523,24 @@ void TradeService::EndTradeSession_(
 	TradeSessionList.erase(session_);
 }
 
+// Returns true if a TradeSession exists with an actor_id or target_id matching the object_id
+bool TradeService::TradeSessionExists_(
+	uint64_t object_id)
+{
+	auto session_ = std::find_if(TradeSessionList.begin(), TradeSessionList.end(), [=](TradeSession& session)
+	{
+		if (session.actor_id == object_id || session.target_id == object_id)
+			return true;
+		else
+			return false;
+	});
+
+	if (session_ == TradeSessionList.end())
+		throw std::invalid_argument("Invalid argument: Provide a proper object_id to get a TradeSession from the TradeSessionList.");
+	else
+		return true;
+}
+
 // This gets a TradeSession in TradeSessionList whether the ObjectId is of the actor or the target
 TradeSession TradeService::GetTradeSession_(
 	uint64_t object_id)
@@ -528,7 +554,7 @@ TradeSession TradeService::GetTradeSession_(
 	});
 
 	if (session_ == TradeSessionList.end())
-		throw std::invalid_argument("Invalid argument: Provide a proper actor_id to get a TradeSession from the TradeSessionList.");
+		throw std::invalid_argument("Invalid argument: Provide a proper object_id to get a TradeSession from the TradeSessionList.");
 	else
 		return *session_;
 }
