@@ -186,7 +186,7 @@ void TradeService::HandleSecureTrade_(
 	{
 		StartTradeSession_(controller->GetObject()->GetObjectId(), secure_trade.target_id);
 		RequestTrade(
-			simulation_service_->GetObjectById<Creature>(secure_trade.trader_id),
+			static_pointer_cast<Creature>(controller->GetObject()),
 			simulation_service_->GetObjectById<Creature>(secure_trade.target_id)
 			);
 	}
