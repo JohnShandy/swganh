@@ -170,24 +170,24 @@ void TradeService::HandleSecureTrade_(
 	SecureTrade secure_trade;
 	secure_trade.Deserialize(message.data);
 
-	if (TradeSessionExists_(controller->GetObject()->GetObjectId()))
+	if (TradeSessionExists_(controller->GetId()))
 	{
-		auto trade_session = GetTradeSession_(controller->GetObject()->GetObjectId());
+		auto trade_session = GetTradeSession_(controller->GetId());
 
-		if (controller->GetObject()->GetObjectId() == trade_session.target_id)
+		if (controller->GetId() == trade_session.target_id)
 		{	
 			BeginTrade(
 				GetTradePartner_(controller->GetRemoteClient(), trade_session), // actor
-				simulation_service_->GetObjectById<Creature>(controller->GetObject()->GetObjectId()) // target
+				simulation_service_->GetObjectById<Creature>(controller->GetId()) // target
 				);
 		}
 	}
 	else
 	{
-		StartTradeSession_(controller->GetObject()->GetObjectId(), secure_trade.target_id);
+		StartTradeSession_(controller->GetId(), secure_trade.target_id);
 		RequestTrade(
-			static_pointer_cast<Creature>(controller->GetObject()),
-			simulation_service_->GetObjectById<Creature>(secure_trade.target_id)
+			static_pointer_cast<Creature>(controller->GetObject()), // actor
+			simulation_service_->GetObjectById<Creature>(secure_trade.target_id) // target
 			);
 	}
 }
@@ -196,7 +196,7 @@ void TradeService::HandleAbortTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const AbortTradeMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 	
 	SendAbortTradeMessage_(trade_partner->GetController()->GetRemoteClient());
@@ -205,14 +205,14 @@ void TradeService::HandleAbortTradeMessage_(
 	client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
 	trade_partner->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
 	
-	EndTradeSession_(client->GetController()->GetObject()->GetObjectId()); // end the TradeSession
+	EndTradeSession_(client->GetController()->GetId()); // end the TradeSession
 }
 
 void TradeService::HandleAcceptTransactionMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const AcceptTransactionMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	SendAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
@@ -238,7 +238,7 @@ void TradeService::HandleAddItemMessage_(
 
 		In addition, the TradeSession should also be set to reflect that the actor has unaccepted the trade.
 	*/
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	/*
@@ -267,7 +267,7 @@ void TradeService::HandleDenyTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const DenyTradeMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 	
 	SendDenyTradeMessage_(trade_partner->GetController()->GetRemoteClient());
@@ -277,7 +277,7 @@ void TradeService::HandleGiveMoneyMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const GiveMoneyMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	SendGiveMoneyMessage_(trade_partner->GetController()->GetRemoteClient(), message.credit_amount);
@@ -299,7 +299,7 @@ void TradeService::HandleRemoveItemMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const RemoveItemMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	SendRemoveItemMessage_(trade_partner->GetController()->GetRemoteClient(), message.item_id);
@@ -321,7 +321,7 @@ void TradeService::HandleUnAcceptTransactionMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const UnAcceptTransactionMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
@@ -334,13 +334,13 @@ void TradeService::HandleVerifyTradeMessage_(
 	const std::shared_ptr<ConnectionClient>& client,
 	const VerifyTradeMessage& message)
 {
-	auto trade_session = GetTradeSession_(client->GetController()->GetObject()->GetObjectId());
+	auto trade_session = GetTradeSession_(client->GetController()->GetId());
 	auto trade_partner = GetTradePartner_(client, trade_session);
 
 	// Determine which party is verifying
-	if (client->GetController()->GetObject()->GetObjectId() == trade_session.actor_id)
+	if (client->GetController()->GetId() == trade_session.actor_id)
 		trade_session.actor_verified = true;
-	else if (client->GetController()->GetObject()->GetObjectId() == trade_session.target_id)
+	else if (client->GetController()->GetId() == trade_session.target_id)
 		trade_session.target_verified = true;
 
 	if (trade_session.actor_verified == true && trade_session.target_verified == true)
