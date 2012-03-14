@@ -34,26 +34,26 @@ namespace controllers {
 	public:
 		static uint32_t header() { return 0x00000115; }
 		
-		uint32_t unknown;
+		uint32_t error;
 		uint64_t trader_id; // sender
 		uint64_t target_id; // recipient
 		
 		SecureTrade()
-			: unknown(0)
+			: error(0)
 			, trader_id(0)
 			, target_id(0)
 		{}
 		
 		void Serialize(anh::ByteBuffer& buffer) const
 		{
-			buffer.write(unknown);
+			buffer.write(error);
 			buffer.write(trader_id);
 			buffer.write(target_id);
 		}
 		
 		void Deserialize(anh::ByteBuffer buffer)
 		{
-			unknown = buffer.read<uint32_t>();
+			error = buffer.read<uint32_t>();
 			trader_id = buffer.read<uint64_t>();
 			target_id = buffer.read<uint64_t>();
 		}
