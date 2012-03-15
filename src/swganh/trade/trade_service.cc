@@ -201,6 +201,7 @@ void TradeService::HandleAbortTradeMessage_(
 	
 	SendAbortTradeMessage_(trade_partner->GetController()->GetRemoteClient());
 	SendTradeCompleteMessage_(trade_partner->GetController()->GetRemoteClient()); // Abort needs to be followed with TradeCompleteMessage to end the trade session and close the trade window
+	SendTradeCompleteMessage_(client);
 
 	client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
 	trade_partner->GetController()->SendSystemMessage(OutOfBand("ui_trade", "aborted"));
