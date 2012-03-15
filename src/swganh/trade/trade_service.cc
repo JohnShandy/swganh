@@ -318,7 +318,7 @@ void TradeService::HandleGiveMoneyMessage_(
 	}
 	else
 	{
-		// Set the target's credit amount to the amount of credits the actor has committed to the trade window
+		// Set the target's credit amount to the amount of credits the target has committed to the trade window
 		trade_session.target_trade_credit_amount = message.credit_amount;	
 
 		if (trade_session.target_transaction_accepted)
@@ -326,7 +326,7 @@ void TradeService::HandleGiveMoneyMessage_(
 			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
 			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 
-			// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
+			// Set the TradeSession to reflect that the target has modified, and therefore unaccepted the trade
 			trade_session.target_transaction_accepted = false;
 		}
 	}
@@ -341,16 +341,33 @@ void TradeService::HandleRemoveItemMessage_(
 
 	SendRemoveItemMessage_(trade_partner->GetController()->GetRemoteClient(), message.item_id);
 
-	// Remove the item's ID from the list of item IDs of the actor's trade window contents
-	trade_session.actor_trade_items.remove(message.item_id);
-
-	if (trade_session.actor_transaction_accepted)
+	if (client->GetController()->GetId())
 	{
-		// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
-		SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+		// Remove the item's ID from the list of item IDs of the actor's trade window contents
+		trade_session.actor_trade_items.remove(message.item_id);
 
-		// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
-		trade_session.actor_transaction_accepted = false;
+		if (trade_session.actor_transaction_accepted)
+		{
+			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
+			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+
+			// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
+			trade_session.actor_transaction_accepted = false;
+		}
+	}
+	else
+	{
+		// Remove the item's ID from the list of item IDs of the target's trade window contents
+		trade_session.target_trade_items.remove(message.item_id);
+
+		if (trade_session.target_transaction_accepted)
+		{
+			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
+			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+
+			// Set the TradeSession to reflect that the target has modified, and therefore unaccepted the trade
+			trade_session.target_transaction_accepted = false;
+		}
 	}
 }
 
