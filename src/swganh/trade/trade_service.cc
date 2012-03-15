@@ -254,16 +254,32 @@ void TradeService::HandleAddItemMessage_(
 	// When the item can't be added, call SendAddItemFailed_() and send the following OutOfBand package
 	// client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "add_item_failed_prose", TT, item_id));
 
-	// Add the item's ID to the list of item IDs of the actor's trade window contents
-	trade_session.actor_trade_items.push_back(message.item_id);
-
-	if (trade_session.actor_transaction_accepted)
+	if (client->GetController()->GetId() == trade_session.actor_id)
 	{
-		// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
-		SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+		// Add the item's ID to the list of item IDs of the actor's trade window contents
+		trade_session.actor_trade_items.push_back(message.item_id);
 
-		// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
-		trade_session.actor_transaction_accepted = false;
+		if (trade_session.actor_transaction_accepted)
+		{
+			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
+			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+
+			// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
+			trade_session.actor_transaction_accepted = false;
+		}
+	}
+	else
+	{
+		// Add the item's ID to the list of item IDs of the target's trade window contents
+		trade_session.target_trade_items.push_back(message.item_id);
+
+		if (trade_session.target_transaction_accepted)
+		{
+			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
+			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+
+			trade_session.target_transaction_accepted = false;
+		}
 	}
 }
 
