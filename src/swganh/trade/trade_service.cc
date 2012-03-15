@@ -302,16 +302,33 @@ void TradeService::HandleGiveMoneyMessage_(
 
 	SendGiveMoneyMessage_(trade_partner->GetController()->GetRemoteClient(), message.credit_amount);
 
-	// Set the actor's credit amount to the amount of credits the actor has committed to the trade window
-	trade_session.actor_trade_credit_amount = message.credit_amount;	
-
-	if (trade_session.actor_transaction_accepted)
+	if (client->GetController()->GetId() == trade_session.actor_id)
 	{
-		// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
-		SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+		// Set the actor's credit amount to the amount of credits the actor has committed to the trade window
+		trade_session.actor_trade_credit_amount = message.credit_amount;	
 
-		// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
-		trade_session.actor_transaction_accepted = false;
+		if (trade_session.actor_transaction_accepted)
+		{
+			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
+			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+
+			// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
+			trade_session.actor_transaction_accepted = false;
+		}
+	}
+	else
+	{
+		// Set the target's credit amount to the amount of credits the actor has committed to the trade window
+		trade_session.target_trade_credit_amount = message.credit_amount;	
+
+		if (trade_session.target_transaction_accepted)
+		{
+			// The trade contents have changed, send an unaccept to the trade partner to prevent a faulty trade
+			SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
+
+			// Set the TradeSession to reflect that the actor has modified, and therefore unaccepted the trade
+			trade_session.target_transaction_accepted = false;
+		}
 	}
 }
 
