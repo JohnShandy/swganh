@@ -380,8 +380,11 @@ void TradeService::HandleUnAcceptTransactionMessage_(
 
 	SendUnAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 
-	// Set the TradeSession to reflect that the actor has unaccepted the trade
-	trade_session.actor_transaction_accepted = false;
+	// Set the TradeSession to reflect which party has accepted the trade
+	if (client->GetController()->GetId() == trade_session.actor_id)
+		trade_session.actor_transaction_accepted = false;
+	else
+		trade_session.target_transaction_accepted = false;
 }
 
 void TradeService::HandleVerifyTradeMessage_(
