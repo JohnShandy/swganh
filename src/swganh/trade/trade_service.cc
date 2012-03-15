@@ -219,8 +219,11 @@ void TradeService::HandleAcceptTransactionMessage_(
 	SendAcceptTransactionMessage_(trade_partner->GetController()->GetRemoteClient());
 	client->GetController()->SendSystemMessage(OutOfBand("ui_trade", "waiting_complete_prose", TU, trade_partner->GetObjectId()));
 
-	// Set the TradeSession to reflect that the actor has accepted the trade
-	trade_session.actor_transaction_accepted = true;
+	// Set the TradeSession to reflect which party has accepted the trade
+	if (client->GetController()->GetId() == trade_session.actor_id)
+		trade_session.actor_transaction_accepted = true;
+	else
+		trade_session.target_transaction_accepted = true;
 }
 
 void TradeService::HandleAddItemMessage_(
