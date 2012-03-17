@@ -49,7 +49,7 @@ ServiceDescription WeatherService::GetServiceDescription()
 	return service_description;
 }
 
-void WeatherService::SendServerWeatherMessage_()
+void WeatherService::SendServerWeatherMessage()
 {
 }
 
