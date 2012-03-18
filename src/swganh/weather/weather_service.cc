@@ -20,20 +20,29 @@
 
 #include "swganh/weather/weather_service.h"
 
+#include <cppconn/exception.h>
+#include <cppconn/connection.h>
+#include <cppconn/prepared_statement.h>
+#include <cppconn/resultset.h>
+#include <cppconn/sqlstring.h>
+#include <boost/log/trivial.hpp>
+
 #include "anh/app/kernel_interface.h"
+#include "anh/database/database_manager_interface.h"
 #include "anh/service/service_manager.h"
 
-/// CHECK THIS
 #include "swganh/messages/server_weather_message.h"
 
 using namespace anh::app;
 using namespace anh::service;
 using namespace std;
-using namespace swganh::weather;
 using namespace swganh::messages;
+using namespace swganh::scripting;
+using namespace swganh::weather;
 
-WeatherService::WeatherService(KernelInterface* kernel) : BaseService(kernel)
-{}
+WeatherService::WeatherService(KernelInterface* kernel) : BaseService(kernel), script_("scripts/weather/weather.py")
+{
+}
 
 ServiceDescription WeatherService::GetServiceDescription()
 {
@@ -49,7 +58,31 @@ ServiceDescription WeatherService::GetServiceDescription()
 	return service_description;
 }
 
-void WeatherService::SendServerWeatherMessage()
+Weather WeatherService::GetSceneWeather(
+	uint32_t scene_id)
+{
+}
+
+void WeatherService::SetSceneWeather(
+	uint32_t scene_id,
+	Weather weather,
+	glm::vec3 cloud_vector)
+{
+}
+
+boost::python::object WeatherService::operator()(
+	anh::app::KernelInterface* kernel)
+{
+	script_.SetContext("kernel", boost::python::ptr(kernel));
+
+	script_.Run();
+
+	return script_.GetGlobals();
+}
+
+void WeatherService::SendServerWeatherMessage_(
+	Weather weather,
+	glm::vec3 cloud_vector)
 {
 }
 

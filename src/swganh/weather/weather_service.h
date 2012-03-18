@@ -22,13 +22,26 @@
 #define SWGANH_WEATHER_WEATHER_SERVICE_H_
 
 #include <cstdint>
+#include <glm/glm.hpp>
 #include <memory>
+
+#include "anh/app/kernel_interface.h"
 
 #include "swganh/base/base_service.h"
 #include "swganh/messages/server_weather_message.h"
+#include "swganh/scripting/python_script.h"
 
 namespace swganh {
 namespace weather {
+
+	enum Weather : uint32_t
+	{
+		NOSTORM,
+		CLOUDY,
+		LIGHTSTORM,
+		MEDIUMSTORM,
+		HEAVYSTORM
+	};
 
 	class WeatherService: public swganh::base::BaseService
 	{
@@ -37,9 +50,24 @@ namespace weather {
 
 		anh::service::ServiceDescription GetServiceDescription();
 
-		void SendServerWeatherMessage();
+		Weather GetSceneWeather(
+			uint32_t scene_id);
+		
+		void SetSceneWeather(
+			uint32_t scene_id,
+			Weather weather_type,
+			glm::vec3 cloud_vector);
+
+		boost::python::object operator()(
+			anh::app::KernelInterface* kernel);
 
 	private:
+		void SendServerWeatherMessage_(
+			Weather weather_type,
+			glm::vec3 cloud_vector);
+
+		swganh::scripting::PythonScript script_;
+
 		void onStart();
 	};
 

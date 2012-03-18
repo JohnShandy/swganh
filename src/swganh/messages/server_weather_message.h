@@ -22,6 +22,7 @@
 #define SWGANH_MESSAGES_SERVER_WEATHER_MESSAGE_H_
 
 #include <cstdint>
+#include <glm/glm.hpp>
 #include "anh/byte_buffer.h"
 #include "swganh/messages/base_swg_message.h"
 
@@ -33,22 +34,20 @@ struct ServerWeatherMessage : public swganh::messages::BaseSwgMessage<ServerWeat
 	static uint32_t opcode() { return 0x486356EA; }
 
 	uint32_t weather_id;
-	float cloud_vector_x;
-	float cloud_vector_y;
-	float cloud_vector_z;
+	glm::vec3 cloud_vector;
 
 	void onSerialize(anh::ByteBuffer& buffer) const {
 		buffer.write(weather_id);
-		buffer.write(cloud_vector_x);
-		buffer.write(cloud_vector_y);
-		buffer.write(cloud_vector_z);
+		buffer.write(cloud_vector.x);
+		buffer.write(cloud_vector.y);
+		buffer.write(cloud_vector.z);
 	}
 
 	void onDeserialize(anh::ByteBuffer buffer) {
 		weather_id = buffer.read<uint32_t>();
-		cloud_vector_x = buffer.read<float>();
-		cloud_vector_y = buffer.read<float>();
-		cloud_vector_z = buffer.read<float>();
+		cloud_vector.x = buffer.read<float>();
+		cloud_vector.y = buffer.read<float>();
+		cloud_vector.z = buffer.read<float>();
 	}
 };
 
