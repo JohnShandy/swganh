@@ -80,7 +80,7 @@ Weather WeatherService::GetSceneWeather(
 			scene_name = result->getString("name");
 		}
 
-		BOOST_LOG_TRIVIAL(info) << "Retrieved (" << weather_type << ") from" << scene_name;
+		BOOST_LOG_TRIVIAL(info) << "Retrieved (" << weather_type << ") from " << scene_name;
 	}
 	catch (sql::SQLException &e)
 	{
@@ -93,9 +93,26 @@ Weather WeatherService::GetSceneWeather(
 
 void WeatherService::SetSceneWeather(
 	uint32_t scene_id,
-	Weather weather,
+	Weather weather_type,
 	glm::vec3 cloud_vector)
 {
+	try
+	{
+		auto db_manager = kernel()->GetDatabaseManager();
+		auto conn = db_manager->getConnection("galaxy");
+		
+		auto statement = unique_ptr<sql::PreparedStatement>(conn->prepareStatement("UPDATE scene SET weather_id = ? WHERE id = ?"));
+		statement->setUInt(1, Weather(weather_type));
+		statement->setUInt(2, scene_id);
+		statement->executeUpdate();
+
+		BOOST_LOG_TRIVIAL(info) << "Set (" << weather_type << ") on " << " scene " << scene_id;
+	}
+	catch (sql::SQLException &e)
+	{
+		BOOST_LOG_TRIVIAL(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
+		BOOST_LOG_TRIVIAL(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
+	}
 }
 
 boost::python::object WeatherService::operator()(
