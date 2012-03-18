@@ -61,6 +61,34 @@ ServiceDescription WeatherService::GetServiceDescription()
 Weather WeatherService::GetSceneWeather(
 	uint32_t scene_id)
 {
+	Weather weather_type;
+	string scene_name;
+
+	try
+	{
+		auto db_manager = kernel()->GetDatabaseManager();
+		auto conn = db_manager->getConnection("galaxy");
+		
+		auto statement = unique_ptr<sql::PreparedStatement>(conn->prepareStatement("SELECT weather_id FROM scene WHERE id = ?"));
+		statement->setUInt(1, scene_id);
+
+		auto result = unique_ptr<sql::ResultSet>(statement->executeQuery());
+
+		while (result->next())
+		{
+			weather_type = Weather(result->getUInt("weather_id"));
+			scene_name = result->getString("name");
+		}
+
+		BOOST_LOG_TRIVIAL(info) << "Retrieved (" << weather_type << ") from" << scene_name;
+	}
+	catch (sql::SQLException &e)
+	{
+		BOOST_LOG_TRIVIAL(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
+		BOOST_LOG_TRIVIAL(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
+	}
+	
+	return weather_type;
 }
 
 void WeatherService::SetSceneWeather(
