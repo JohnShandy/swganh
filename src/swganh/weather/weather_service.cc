@@ -32,12 +32,14 @@
 #include "anh/service/service_manager.h"
 
 #include "swganh/messages/server_weather_message.h"
+#include "swganh/simulation/simulation_service.h"
 
 using namespace anh::app;
 using namespace anh::service;
 using namespace std;
 using namespace swganh::messages;
 using namespace swganh::scripting;
+using namespace swganh::simulation;
 using namespace swganh::weather;
 
 WeatherService::WeatherService(KernelInterface* kernel) : BaseService(kernel), script_("scripts/weather/weather.py")
@@ -126,9 +128,16 @@ boost::python::object WeatherService::operator()(
 }
 
 void WeatherService::SendServerWeatherMessage_(
-	Weather weather,
+	Weather weather_type,
 	glm::vec3 cloud_vector)
 {
+	ServerWeatherMessage server_weather_message;
+	server_weather_message.weather_id = Weather(weather_type);
+	server_weather_message.cloud_vector = cloud_vector;
+
+	simulation_service_ = std::static_pointer_cast<SimulationService>(kernel()->GetServiceManager()->GetService("SimulationService"));
+
+	//
 }
 
 void WeatherService::onStart()

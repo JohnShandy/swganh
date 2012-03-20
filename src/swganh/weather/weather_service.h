@@ -32,6 +32,11 @@
 #include "swganh/scripting/python_script.h"
 
 namespace swganh {
+namespace simulation {
+	class SimulationService;
+}} // namespace swganh::simulation
+
+namespace swganh {
 namespace weather {
 
 	enum Weather : uint32_t
@@ -69,6 +74,8 @@ namespace weather {
 		swganh::scripting::PythonScript script_;
 
 		void onStart();
+
+		std::shared_ptr<swganh::simulation::SimulationService> simulation_service_;
 	};
 
 }} // namespace swganh::weather
