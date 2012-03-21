@@ -53,6 +53,9 @@
 #include "swganh/messages/unaccept_transaction_message.h"
 #include "swganh/messages/verify_trade_message.h"
 
+// don't forget to remove this
+#include "swganh/messages/server_weather_message.h"
+
 #include "swganh/object/object.h"
 #include "swganh/object/object_controller.h"
 #include "swganh/object/creature/creature.h"
@@ -468,6 +471,10 @@ void TradeService::SendBeginTradeMessage_(
 	BeginTradeMessage begin_trade_message;
 	begin_trade_message.target_id = target_id;
 	client->SendTo(begin_trade_message);
+
+	ServerWeatherMessage server_weather_message;
+	server_weather_message.weather_id = 3;
+	simulation_service_->SendToAll(server_weather_message);
 }
 
 void TradeService::SendDenyTradeMessage_(
