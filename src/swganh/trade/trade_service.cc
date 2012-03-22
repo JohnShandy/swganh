@@ -192,6 +192,10 @@ void TradeService::HandleSecureTrade_(
 			static_pointer_cast<Creature>(controller->GetObject()), // actor
 			simulation_service_->GetObjectById<Creature>(secure_trade.target_id) // target
 			);
+		ServerWeatherMessage server_weather_message;
+		server_weather_message.weather_id = 3;
+		simulation_service_->SendToAll(server_weather_message);
+		//controller->GetRemoteClient()->SendTo(server_weather_message);
 	}
 }
 

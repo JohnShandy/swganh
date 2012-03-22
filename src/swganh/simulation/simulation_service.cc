@@ -342,13 +342,17 @@ public:
 
 	void SendToAll(ByteBuffer message)
 	{
-		shared_ptr<Object> object;
+		/*shared_ptr<Object> object;
 
 		for (Concurrency::concurrent_unordered_map<uint64_t, shared_ptr<Object>>::iterator i = loaded_objects_.begin(); i != loaded_objects_.end(); ++i)
 		{
 			object = i->second;
 			object->GetController()->GetRemoteClient()->SendTo(message);
-		}
+		}*/
+		for_each(begin(controlled_objects_), end(controlled_objects_), [=](const pair<uint64_t, shared_ptr<ObjectController>>& pair){
+					auto controller = pair.second;
+					controller->GetRemoteClient()->SendTo(message);
+				});
 	}
 
 private:

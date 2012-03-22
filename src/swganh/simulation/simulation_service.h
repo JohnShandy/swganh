@@ -99,8 +99,8 @@ namespace simulation {
 		template <typename T>
 		void SendToAll(const T& message)
 		{
-			auto message_buffer = server_->AllocateBuffer();
-			message.serialize(*message_buffer);
+			anh::ByteBuffer message_buffer;
+			message.serialize(message_buffer);
 
 			SendToAll(message_buffer);
 		}
