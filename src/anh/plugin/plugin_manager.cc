@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
+#include "anh/logger.h"
 #include <boost/program_options.hpp>
 
 #include "anh/app/kernel_interface.h"
@@ -102,19 +102,20 @@ void PluginManager::LoadAllPlugins(const std::string& directory) {
         });
 
     } catch(const std::exception& e) {
-        BOOST_LOG_TRIVIAL(fatal) << e.what();
+        LOG(fatal) << e.what();
     }
 }
 
 void PluginManager::ConfigurePlugin(std::string plugin_name, ConfigFunc config_func) {
     if (!config_func) {
-        throw runtime_error("Unable to open the configuration file at: config/swganh.cfg");
+        throw runtime_error("Missing configuration function.");
     }
 
     ifstream config_file("config/plugins/" + plugin_name + "/" + plugin_name + ".cfg");
     
     if (!config_file.is_open()) {
-        throw runtime_error("Unable to open the configuration file at: config/plugins/" + plugin_name + ".cfg");
+        LOG(warning) << "No configuration loaded for plugin: " + plugin_name;
+        return;
     }
     
     variables_map vm;

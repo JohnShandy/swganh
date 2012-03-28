@@ -46,9 +46,9 @@ using namespace swganh::network;
 using namespace swganh::object;
 using namespace swganh::simulation;
 
-using anh::app::KernelInterface;
 using anh::network::soe::ServerInterface;
 using anh::service::ServiceDescription;
+using swganh::app::SwganhKernel;
 using swganh::base::BaseService;
 
 namespace swganh {
@@ -56,7 +56,7 @@ namespace simulation {
 
 class SimulationServiceImpl {
 public:
-    SimulationServiceImpl(KernelInterface* kernel)
+    SimulationServiceImpl(SwganhKernel* kernel)
         : kernel_(kernel)
     {
     }
@@ -97,7 +97,7 @@ public:
 
         if (find_iter == loaded_objects_.end())
         {
-            BOOST_LOG_TRIVIAL(warning) << "Nothing to persist, no object saved";
+            LOG(warning) << "Nothing to persist, no object saved";
             return;
             //throw swganh::object::InvalidObject("Requested object already loaded");
         }
@@ -109,7 +109,7 @@ public:
 
         if (find_iter == loaded_objects_.end())
         {
-            BOOST_LOG_TRIVIAL(warning) << "Nothing to persist, no object saved";
+            LOG(warning) << "Nothing to persist, no object saved";
             return;
             //throw swganh::object::InvalidObject("Requested object already loaded");
         }
@@ -122,12 +122,12 @@ public:
 			auto inner_contained = pair.second->GetContainedObjects();
 			if (inner_contained.size() > 0)
 			{
-				BOOST_LOG_TRIVIAL(warning) << "Persist inner container recursively:" << pair.first;
+				LOG(warning) << "Persist inner container recursively:" << pair.first;
 				PersistRelatedObjects(pair.first);
 			}
 			else
 			{
-				BOOST_LOG_TRIVIAL(warning) << "Persist inner container:" << pair.first;
+				LOG(warning) << "Persist inner container:" << pair.first;
 				PersistObject(pair.first);
 			}
 		});
@@ -342,24 +342,17 @@ public:
 
 	void SendToAll(ByteBuffer message)
 	{
-		/*shared_ptr<Object> object;
-
-		for (Concurrency::concurrent_unordered_map<uint64_t, shared_ptr<Object>>::iterator i = loaded_objects_.begin(); i != loaded_objects_.end(); ++i)
-		{
-			object = i->second;
-			object->GetController()->GetRemoteClient()->SendTo(message);
-		}*/
-		for_each(begin(controlled_objects_), end(controlled_objects_), [=](const pair<uint64_t, shared_ptr<ObjectController>>& pair){
-					auto controller = pair.second;
-					controller->GetRemoteClient()->SendTo(message);
-				});
+		for_each(begin(controlled_objects_), end(controlled_objects_), [=] (const pair<uint64_t, shared_ptr<ObjectController>>& pair) {
+            auto controller = pair.second;
+            controller->GetRemoteClient()->SendTo(message);
+        });
 	}
 
 private:
     shared_ptr<ObjectManager> object_manager_;
     shared_ptr<SceneManager> scene_manager_;
     shared_ptr<MovementManager> movement_manager_;
-    KernelInterface* kernel_;
+    SwganhKernel* kernel_;
 	ServerInterface* server_;
 
     ObjControllerHandlerMap controller_handlers_;
@@ -370,7 +363,7 @@ private:
 
 }}  // namespace swganh::simulation
 
-SimulationService::SimulationService(KernelInterface* kernel)
+SimulationService::SimulationService(SwganhKernel* kernel)
     : BaseService(kernel)
     , impl_(new SimulationServiceImpl(kernel))
 {}
@@ -397,16 +390,16 @@ void SimulationService::StartScene(const std::string& scene_label)
     impl_->GetSceneManager()->LoadSceneDescriptionsFromDatabase(kernel()->GetDatabaseManager()->getConnection("galaxy"));
     impl_->GetSceneManager()->StartScene(scene_label);
     // load factories
-    RegisterObjectFactories(kernel());
+    RegisterObjectFactories();
 }
 
 void SimulationService::StopScene(const std::string& scene_label)
 {
     impl_->GetSceneManager()->StopScene(scene_label);
 }
-void SimulationService::RegisterObjectFactories(anh::app::KernelInterface* kernel)
+void SimulationService::RegisterObjectFactories()
 {
-        auto db_manager = kernel->GetDatabaseManager();
+        auto db_manager = kernel()->GetDatabaseManager();
         impl_->GetObjectManager()->RegisterObjectType(0, make_shared<ObjectFactory>(db_manager, this));
         impl_->GetObjectManager()->RegisterObjectType(tangible::Tangible::type, make_shared<tangible::TangibleFactory>(db_manager, this));
         impl_->GetObjectManager()->RegisterObjectType(intangible::Intangible::type, make_shared<intangible::IntangibleFactory>(db_manager, this));
@@ -477,7 +470,7 @@ void SimulationService::SendToAll(ByteBuffer message)
 
 void SimulationService::onStart()
 {
-	auto connection_service = std::static_pointer_cast<ConnectionService>(kernel()->GetServiceManager()->GetService("ConnectionService"));
+	auto connection_service = kernel()->GetServiceManager()->GetService<ConnectionService>("ConnectionService");
 
     connection_service->RegisterMessageHandler(
         &SimulationServiceImpl::HandleSelectCharacter, impl_.get());

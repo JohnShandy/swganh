@@ -7,10 +7,11 @@
 #include <boost/regex.hpp>
 #endif
 
-#include <boost/log/trivial.hpp>
+#include "anh/logger.h"
 
-#include "anh/app/kernel_interface.h"
 #include "anh/service/service_manager.h"
+
+#include "swganh/app/swganh_kernel.h"
 
 #include "swganh/messages/controllers/spatial_chat.h"
 #include "swganh/messages/obj_controller_message.h"
@@ -34,6 +35,8 @@ using namespace swganh::messages::controllers;
 using namespace swganh::object;
 using namespace swganh::simulation;
 
+using swganh::app::SwganhKernel;
+
 #ifdef WIN32
 using std::wregex;
 using std::wsmatch;
@@ -44,7 +47,7 @@ using boost::wsmatch;
 using boost::regex_match;
 #endif
 
-ChatService::ChatService(KernelInterface* kernel)
+ChatService::ChatService(SwganhKernel* kernel)
 : BaseService(kernel)
 {}
 
@@ -73,7 +76,7 @@ void ChatService::HandleSpatialChatInternal(
     wsmatch m;
 
     if (! regex_match(command.command_options, m, p)) {
-        BOOST_LOG_TRIVIAL(error) << "Invalid spatial chat message format";
+        LOG(error) << "Invalid spatial chat message format";
         return; // We suffered an unrecoverable error, bail out now.
     }
     

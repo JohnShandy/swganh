@@ -3,7 +3,7 @@
 
 #include "base_swg_server.h"
 
-#include <boost/log/trivial.hpp>
+#include "anh/logger.h"
 
 #include "anh/byte_buffer.h"
 
@@ -25,17 +25,18 @@ void BaseSwgServer::HandleMessage(
     auto find_iter = message_handlers_.find(message_type);
     if (find_iter == message_handlers_.end())
     {
-        BOOST_LOG_TRIVIAL(warning) << "Received an unidentified message: " << std::hex << message_type;
+        LOG(warning) << "Received an unidentified message: " << std::hex << message_type;
         return;
     }
 
     try 
     {
         find_iter->second(connection, message);
+        LOG_NET << "HandleMessage: "  << std::hex << message_type << " Client -> Server \n" << *message;
     }
     catch(std::exception& e)
     {
-        BOOST_LOG_TRIVIAL(error) << e.what();
+        LOG(error) << e.what();
     }
 }
 

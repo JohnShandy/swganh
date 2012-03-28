@@ -26,7 +26,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <boost/log/trivial.hpp>
+#include "anh/logger.h"
 
 #include "anh/network/soe/packet_utilities.h"
 #include "anh/network/soe/server.h"
@@ -40,7 +40,7 @@
 #include "swganh/login/login_client.h"
 
 #include "swganh/login/galaxy_status.h"
-#include "swganh/login/messages/login_client_id.h"
+#include "swganh/messages/login_client_id.h"
 
 namespace anh {
 namespace network {
@@ -59,6 +59,11 @@ class EventInterface;
 }}  // namespace anh::event_dispatcher
 
 namespace swganh {
+namespace character {
+class CharacterProviderInterface;
+}}
+
+namespace swganh {
 namespace login {
     
 class AuthenticationManager;
@@ -75,7 +80,7 @@ public:
     LoginService(
         std::string listen_address, 
         uint16_t listen_port, 
-        anh::app::KernelInterface* kernel);
+        swganh::app::SwganhKernel* kernel);
     ~LoginService();
     
     anh::service::ServiceDescription GetServiceDescription();
@@ -105,7 +110,7 @@ private:
 
     void subscribe();
     
-    void HandleLoginClientId_(const std::shared_ptr<LoginClient>& login_client, const messages::LoginClientId& message);
+    void HandleLoginClientId_(const std::shared_ptr<LoginClient>& login_client, const swganh::messages::LoginClientId& message);
 
     std::vector<GalaxyStatus> GetGalaxyStatus_();
     void UpdateGalaxyStatus_();
@@ -118,8 +123,10 @@ private:
     boost::mutex session_map_mutex_;
     SessionMap session_map_;
 
-    std::shared_ptr<swganh::character::CharacterService> character_service_;
-	std::shared_ptr<swganh::galaxy::GalaxyService> galaxy_service_;
+    swganh::character::CharacterService* character_service_;
+    std::shared_ptr<swganh::character::CharacterProviderInterface> character_provider_;
+
+	swganh::galaxy::GalaxyService* galaxy_service_;
     std::shared_ptr<AuthenticationManager> authentication_manager_;
     std::shared_ptr<providers::AccountProviderInterface> account_provider_;
     
