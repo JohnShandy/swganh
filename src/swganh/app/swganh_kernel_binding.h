@@ -8,7 +8,6 @@
 #include "swganh/combat/combat_service.h"
 #include "swganh/social/social_service.h"
 #include "swganh/simulation/simulation_service.h"
-#include "swganh/trade/trade_service.h"
 
 #include <boost/python.hpp>
 
@@ -42,11 +41,6 @@ void exportSWGANHKernel()
                 return_value_policy<reference_existing_object>(),
                 boost::mpl::vector<swganh::social::SocialService*, anh::service::ServiceManager*>()),
                 "returns an internal refrence of the :class:`.SocialService`")
-        .def("trade_service", make_function(
-                bind(&anh::service::ServiceManager::GetService<swganh::trade::TradeService>, std::placeholders::_1, "TradeService"),
-                 return_value_policy<reference_existing_object>(),
-                 boost::mpl::vector<swganh::trade::TradeService*, anh::service::ServiceManager*>()),
-                 "returns an internal refrence of the :class:`.TradeService`")
        ;
 }
 #endif // SWGANH_APP_SWGANH_KERNEL_BINDING_H_

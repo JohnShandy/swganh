@@ -26,7 +26,6 @@
 #include "swganh/galaxy/galaxy_service.h"
 #include "swganh/combat/combat_service.h"
 #include "swganh/social/social_service.h"
-#include "swganh/trade/trade_service.h"
 
 using namespace anh;
 using namespace anh::app;
@@ -42,7 +41,6 @@ using namespace swganh::connection;
 using namespace swganh::combat;
 using namespace swganh::simulation;
 using namespace swganh::galaxy;
-using namespace swganh::trade;
 
 options_description AppConfig::BuildConfigDescription() {
     options_description desc;
@@ -332,10 +330,6 @@ void SwganhApp::LoadCoreServices_()
         kernel_->GetServiceManager()->AddService(
             "SocialService", 
             unique_ptr<social::SocialService>(new social::SocialService(kernel_.get())));
-			
-		kernel_->GetServiceManager()->AddService(
-			"TradeService",
-			unique_ptr<TradeService>(new TradeService(kernel_.get())));
 	}
 
 	// always need a galaxy service running
