@@ -79,6 +79,8 @@ using namespace swganh::object::creature;
 using namespace swganh::object::tangible;
 using namespace swganh::simulation;
 
+using swganh::app::SwganhKernel;
+
 #ifdef WIN32
 using std::wregex;
 using std::wsmatch;
@@ -89,7 +91,7 @@ using boost::wsmatch;
 using boost::regex_match;
 #endif
 
-TradeService::TradeService(KernelInterface* kernel) : BaseService(kernel), TradeSessionList()
+TradeService::TradeService(SwganhKernel* kernel) : BaseService(kernel), TradeSessionList()
 {}
 
 ServiceDescription TradeService::GetServiceDescription()
@@ -529,8 +531,7 @@ void TradeService::SendVerifyTradeMessage_(
 
 void TradeService::onStart()
 {
-	// Register ObjController Handlers with the SimulationService
-	simulation_service_ = std::static_pointer_cast<SimulationService>(kernel()->GetServiceManager()->GetService("SimulationService"));
+    simulation_service_ = kernel()->GetServiceManager()->GetService<SimulationService>("SimulationService");
 
 	simulation_service_->RegisterControllerHandler(0x00000115,
 		[this] (
@@ -541,7 +542,7 @@ void TradeService::onStart()
 	});
 
 	// Register Message Handlers with the ConnectionService
-	auto connection_service = std::static_pointer_cast<ConnectionService>(kernel()->GetServiceManager()->GetService("ConnectionService"));
+	auto connection_service = kernel()->GetServiceManager()->GetService<ConnectionService>("ConnectionService");
 
 	connection_service->RegisterMessageHandler(&TradeService::HandleAbortTradeMessage_, this);
 	connection_service->RegisterMessageHandler(&TradeService::HandleAcceptTransactionMessage_, this);
@@ -553,7 +554,7 @@ void TradeService::onStart()
 	connection_service->RegisterMessageHandler(&TradeService::HandleVerifyTradeMessage_, this);
 
 	// Register CommandQueueEnqueue Handlers with the CommandService
-	auto command_service = std::static_pointer_cast<CommandService>(kernel()->GetServiceManager()->GetService("CommandService"));
+    auto command_service = kernel()->GetServiceManager()->GetService<CommandService>("CommandService");
 
 	command_service->SetCommandHandler(0x993190CA,
 		[this] (

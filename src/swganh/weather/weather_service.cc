@@ -42,7 +42,9 @@ using namespace swganh::scripting;
 using namespace swganh::simulation;
 using namespace swganh::weather;
 
-WeatherService::WeatherService(KernelInterface* kernel) : BaseService(kernel), script_("scripts/weather/weather.py")
+using swganh::app::SwganhKernel;
+
+WeatherService::WeatherService(SwganhKernel* kernel) : BaseService(kernel), script_("scripts/weather/weather.py")
 {
 }
 
@@ -135,7 +137,7 @@ void WeatherService::SendServerWeatherMessage_(
 	server_weather_message.weather_id = Weather(weather_type);
 	server_weather_message.cloud_vector = cloud_vector;
 
-	simulation_service_ = std::static_pointer_cast<SimulationService>(kernel()->GetServiceManager()->GetService("SimulationService"));
+	simulation_service_ = kernel()->GetServiceManager()->GetService<SimulationService>("SimulationService");
 
 	//
 }

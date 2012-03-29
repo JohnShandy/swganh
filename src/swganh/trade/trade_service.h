@@ -26,6 +26,7 @@
 #include <memory>
 #include <string>
 
+#include "swganh/app/swganh_kernel.h"
 #include "swganh/base/base_service.h"
 
 #include "swganh/connection/connection_client.h"
@@ -63,7 +64,7 @@ namespace trade {
 	class TradeService: public swganh::base::BaseService
 	{
 	public:
-		explicit TradeService(anh::app::KernelInterface* kernel);
+		explicit TradeService(swganh::app::SwganhKernel* kernel);
 
 		anh::service::ServiceDescription GetServiceDescription();
 
@@ -165,7 +166,7 @@ namespace trade {
 		
 		void onStart();
 
-		std::shared_ptr<swganh::simulation::SimulationService> simulation_service_;
+		swganh::simulation::SimulationService* simulation_service_;
 
 		std::list<swganh::trade::TradeSession> TradeSessionList;
 

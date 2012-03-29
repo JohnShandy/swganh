@@ -27,6 +27,7 @@
 
 #include "anh/app/kernel_interface.h"
 
+#include "swganh/app/swganh_kernel.h"
 #include "swganh/base/base_service.h"
 #include "swganh/messages/server_weather_message.h"
 #include "swganh/scripting/python_script.h"
@@ -51,7 +52,7 @@ namespace weather {
 	class WeatherService: public swganh::base::BaseService
 	{
 	public:
-		explicit WeatherService(anh::app::KernelInterface* kernel);
+		explicit WeatherService(swganh::app::SwganhKernel* kernel);
 
 		anh::service::ServiceDescription GetServiceDescription();
 
@@ -75,7 +76,7 @@ namespace weather {
 
 		void onStart();
 
-		std::shared_ptr<swganh::simulation::SimulationService> simulation_service_;
+		swganh::simulation::SimulationService* simulation_service_;
 	};
 
 }} // namespace swganh::weather

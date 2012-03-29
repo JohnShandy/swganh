@@ -335,7 +335,7 @@ void SwganhApp::LoadCoreServices_()
 			
 		kernel_->GetServiceManager()->AddService(
 			"TradeService",
-			unique_ptr<TradeService>(new TradeService(kernel_.get())))
+			unique_ptr<TradeService>(new TradeService(kernel_.get())));
 	}
 
 	// always need a galaxy service running
