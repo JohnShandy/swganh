@@ -276,9 +276,9 @@ public:
 
     void HandleObjControllerMessage(
         const shared_ptr<ConnectionClient>& client,
-        const ObjControllerMessage& message)
+        ObjControllerMessage message)
     {
-        auto find_iter = controller_handlers_.find(message.header);
+        auto find_iter = controller_handlers_.find(message.message_type);
 
         if (find_iter == controller_handlers_.end())
         {
@@ -290,7 +290,7 @@ public:
 
     void HandleSelectCharacter(
         const shared_ptr<ConnectionClient>& client,
-        const SelectCharacter& message)
+        SelectCharacter message)
     {
         auto object = GetObjectById(message.character_id);
 
@@ -347,6 +347,15 @@ public:
             controller->GetRemoteClient()->SendTo(message);
         });
 	}
+
+    void SendToAllInScene(ByteBuffer message, uint32_t scene_id)
+    {
+        for_each(begin(controlled_objects_), end(controlled_objects_), [=] (const pair<uint64_t, shared_ptr<ObjectController>>& pair) {
+            auto controller = pair.second;
+            if (controller->GetObject()->GetSceneId() == scene_id)
+                controller->GetRemoteClient()->SendTo(message);
+        });
+    }
 
 private:
     shared_ptr<ObjectManager> object_manager_;
@@ -468,6 +477,11 @@ void SimulationService::SendToAll(ByteBuffer message)
 	impl_->SendToAll(message);
 }
 
+void SimulationService::SendToAllInScene(ByteBuffer message, uint32_t scene_id)
+{
+    impl_->SendToAllInScene(message, scene_id);
+}
+
 void SimulationService::onStart()
 {
 	auto connection_service = kernel()->GetServiceManager()->GetService<ConnectionService>("ConnectionService");
@@ -487,7 +501,7 @@ void SimulationService::onStart()
 
     RegisterControllerHandler(0x000000F1, [this] (
         const std::shared_ptr<ObjectController>& controller,
-        const swganh::messages::ObjControllerMessage& message)
+        const swganh::messages::ObjControllerMessage message)
     {
         this->impl_->GetMovementManager()->HandleDataTransformWithParent(controller, message);
     });
