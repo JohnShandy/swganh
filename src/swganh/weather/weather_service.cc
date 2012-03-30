@@ -86,7 +86,7 @@ Weather WeatherService::GetSceneWeather(
 
 		BOOST_LOG_TRIVIAL(info) << "Retrieved (" << weather_type << ") from " << scene_name;
 	}
-	catch (sql::SQLException &e)
+	catch (sql::SQLException& e)
 	{
 		BOOST_LOG_TRIVIAL(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
 		BOOST_LOG_TRIVIAL(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
@@ -105,14 +105,19 @@ void WeatherService::SetSceneWeather(
 		auto db_manager = kernel()->GetDatabaseManager();
 		auto conn = db_manager->getConnection("galaxy");
 		
-		auto statement = unique_ptr<sql::PreparedStatement>(conn->prepareStatement("UPDATE scene SET weather_id = ? WHERE id = ?"));
+		auto statement = unique_ptr<sql::PreparedStatement>(conn->prepareStatement("UPDATE scene SET weather_id = ?, cloud_vector_x = ?, cloud_vector_y = ?, cloud_vector_z = ?, WHERE id = ?"));
 		statement->setUInt(1, Weather(weather_type));
-		statement->setUInt(2, scene_id);
+        statement->setDouble(2, cloud_vector.x);
+        statement->setDouble(3, cloud_vector.y);
+        statement->setDouble(4, cloud_vector.z);
+		statement->setUInt(5, scene_id);
 		statement->executeUpdate();
+
+        SendServerWeatherMessage_(weather_type, cloud_vector, scene_id);
 
 		BOOST_LOG_TRIVIAL(info) << "Set (" << weather_type << ") on " << " scene " << scene_id;
 	}
-	catch (sql::SQLException &e)
+	catch (sql::SQLException& e)
 	{
 		BOOST_LOG_TRIVIAL(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
 		BOOST_LOG_TRIVIAL(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
@@ -122,26 +127,31 @@ void WeatherService::SetSceneWeather(
 boost::python::object WeatherService::operator()(
 	anh::app::KernelInterface* kernel)
 {
-	script_.SetContext("kernel", boost::python::ptr(kernel));
+	/*script_.SetContext("kernel", boost::python::ptr(kernel));
 
 	script_.Run();
 
-	return script_.GetGlobals();
+	return script_.GetGlobals();*/
 }
 
 void WeatherService::SendServerWeatherMessage_(
 	Weather weather_type,
-	glm::vec3 cloud_vector)
+	glm::vec3 cloud_vector,
+    uint32_t scene_id)
 {
 	ServerWeatherMessage server_weather_message;
 	server_weather_message.weather_id = Weather(weather_type);
 	server_weather_message.cloud_vector = cloud_vector;
 
-	simulation_service_ = kernel()->GetServiceManager()->GetService<SimulationService>("SimulationService");
-
-	//
+	auto simulation_service_ = kernel()->GetServiceManager()->GetService<SimulationService>("SimulationService");
+    simulation_service_->SendToAllInScene(server_weather_message, scene_id);
 }
 
 void WeatherService::onStart()
 {
+    glm::vec3 clouds;
+    clouds.x = 1.0;
+    clouds.y = 0.2;
+    clouds.z = 3.0;
+    SetSceneWeather(1, MEDIUMSTORM, clouds);
 }

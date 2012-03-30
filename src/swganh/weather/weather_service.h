@@ -70,7 +70,8 @@ namespace weather {
 	private:
 		void SendServerWeatherMessage_(
 			Weather weather_type,
-			glm::vec3 cloud_vector);
+			glm::vec3 cloud_vector,
+            uint32_t scene_id);
 
 		swganh::scripting::PythonScript script_;
 
