@@ -19,6 +19,7 @@ namespace Concurrency {
 
 #endif
 
+#include "anh/byte_buffer.h"
 #include "anh/hash_string.h"
 #include "anh/network/soe/server.h"
 
@@ -31,12 +32,12 @@ namespace anh {
 
 namespace swganh {
 namespace network {
-    
+
     class BaseSwgServer : public anh::network::soe::Server
     {
     public:
         BaseSwgServer(boost::asio::io_service& io_service);
-        
+
         template<typename ConnectionType, typename MessageType>
         struct GenericMessageHandler
         {
@@ -46,24 +47,24 @@ namespace network {
         };
 
         typedef std::function<void (
-            const std::shared_ptr<anh::network::soe::Session>&, 
-            std::shared_ptr<anh::ByteBuffer> message)
+            const std::shared_ptr<anh::network::soe::Session>&,
+            anh::ByteBuffer message)
         > SwgMessageHandler;
 
         typedef std::runtime_error HandlerAlreadyDefined;
         typedef std::runtime_error UnidentifiedMessageReceived;
         typedef std::runtime_error ValidClientRequired;
-        
+
         void HandleMessage(
-            std::shared_ptr<anh::network::soe::Session> connection, 
-            std::shared_ptr<anh::ByteBuffer> message);
-        
+            const std::shared_ptr<anh::network::soe::Session>& connection,
+            anh::ByteBuffer message);
+
         template<typename T, typename ConnectionType, typename MessageType>
         void RegisterMessageHandler(void (T::*memfunc)(const std::shared_ptr<ConnectionType>&, MessageType), T* instance)
         {
             RegisterMessageHandler<ConnectionType, MessageType>(std::bind(memfunc, instance, std::placeholders::_1, std::placeholders::_2));
         }
-        
+
         template<typename ConnectionType, typename MessageType>
         void RegisterMessageHandler(
             typename GenericMessageHandler<ConnectionType, MessageType>::HandlerType&& handler)
@@ -71,11 +72,11 @@ namespace network {
             auto shared_handler = std::make_shared<typename GenericMessageHandler<ConnectionType, MessageType>::HandlerType>(std::move(handler));
 
             auto wrapped_handler = [this, shared_handler] (
-                std::shared_ptr<anh::network::soe::Session> client, 
-                std::shared_ptr<anh::ByteBuffer> message)
+                const std::shared_ptr<anh::network::soe::Session>& client,
+                anh::ByteBuffer message)
             {
                 MessageType tmp;
-                tmp.Deserialize(std::move(*message));
+                tmp.Deserialize(std::move(message));
 
                 (*shared_handler)(std::static_pointer_cast<ConnectionType>(client), std::move(tmp));
             };
@@ -84,20 +85,20 @@ namespace network {
         }
 
         void RegisterMessageHandler(
-            anh::HashString handler_id, 
+            anh::HashString handler_id,
             SwgMessageHandler&& handler);
 
         bool HasHandler(anh::HashString handler_id);
-        
+
     private:
         typedef Concurrency::concurrent_unordered_map<
             anh::HashString,
             SwgMessageHandler
         > MessageHandlerMap;
-        
+
         MessageHandlerMap message_handlers_;
     };
-    
+
 }}  // namespace swganh::network
 
 #endif  // SWGANH_NETWORK_BASE_SWG_SERVER_H_
