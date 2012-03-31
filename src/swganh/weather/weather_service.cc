@@ -150,8 +150,8 @@ void WeatherService::SendServerWeatherMessage_(
 void WeatherService::onStart()
 {
     glm::vec3 clouds;
-    clouds.x = 1.0;
-    clouds.y = 0.2;
-    clouds.z = 3.0;
+    clouds.x = 1.0f;
+    clouds.y = 0.2f;
+    clouds.z = 3.0f;
     SetSceneWeather(1, MEDIUMSTORM, clouds);
 }
