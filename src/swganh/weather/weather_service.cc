@@ -127,11 +127,11 @@ void WeatherService::SetSceneWeather(
 boost::python::object WeatherService::operator()(
 	anh::app::KernelInterface* kernel)
 {
-	/*script_.SetContext("kernel", boost::python::ptr(kernel));
+	script_.SetContext("kernel", boost::python::ptr(kernel));
 
 	script_.Run();
 
-	return script_.GetGlobals();*/
+	return script_.GetGlobals();
 }
 
 void WeatherService::SendServerWeatherMessage_(
