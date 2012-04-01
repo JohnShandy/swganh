@@ -25,7 +25,8 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/resultset.h>
 #include <cppconn/sqlstring.h>
-#include <boost/log/trivial.hpp>
+
+#include <anh/logger.h>
 
 #include "anh/app/kernel_interface.h"
 #include "anh/database/database_manager_interface.h"
@@ -84,12 +85,12 @@ Weather WeatherService::GetSceneWeather(
 			scene_name = result->getString("name");
 		}
 
-		BOOST_LOG_TRIVIAL(info) << "Retrieved (" << weather_type << ") from " << scene_name;
+		LOG(info) << "Retrieved (" << weather_type << ") from " << scene_name;
 	}
 	catch (sql::SQLException& e)
 	{
-		BOOST_LOG_TRIVIAL(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
-		BOOST_LOG_TRIVIAL(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
+		LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
+		LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
 	}
 	
 	return weather_type;
@@ -105,8 +106,8 @@ void WeatherService::SetSceneWeather(
 		auto db_manager = kernel()->GetDatabaseManager();
 		auto conn = db_manager->getConnection("galaxy");
 		
-		auto statement = unique_ptr<sql::PreparedStatement>(conn->prepareStatement("UPDATE scene SET weather_id = ?, cloud_vector_x = ?, cloud_vector_y = ?, cloud_vector_z = ?, WHERE id = ?"));
-		statement->setUInt(1, Weather(weather_type));
+		auto statement = unique_ptr<sql::PreparedStatement>(conn->prepareStatement("UPDATE scene SET weather_id = ?, cloud_vector_x = ?, cloud_vector_y = ?, cloud_vector_z = ? WHERE id = ?"));
+        statement->setUInt(1, weather_type);
         statement->setDouble(2, cloud_vector.x);
         statement->setDouble(3, cloud_vector.y);
         statement->setDouble(4, cloud_vector.z);
@@ -115,12 +116,12 @@ void WeatherService::SetSceneWeather(
 
         SendServerWeatherMessage_(weather_type, cloud_vector, scene_id);
 
-		BOOST_LOG_TRIVIAL(info) << "Set (" << weather_type << ") on " << " scene " << scene_id;
+		LOG(info) << "Set weather on scene " << scene_id << " to " << weather_type;
 	}
 	catch (sql::SQLException& e)
 	{
-		BOOST_LOG_TRIVIAL(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
-		BOOST_LOG_TRIVIAL(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
+		LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
+		LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
 	}
 }
 
@@ -140,7 +141,7 @@ void WeatherService::SendServerWeatherMessage_(
     uint32_t scene_id)
 {
 	ServerWeatherMessage server_weather_message;
-	server_weather_message.weather_id = Weather(weather_type);
+	server_weather_message.weather_id = weather_type;
 	server_weather_message.cloud_vector = cloud_vector;
 
 	auto simulation_service_ = kernel()->GetServiceManager()->GetService<SimulationService>("SimulationService");
