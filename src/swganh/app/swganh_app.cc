@@ -26,6 +26,7 @@
 #include "swganh/galaxy/galaxy_service.h"
 #include "swganh/combat/combat_service.h"
 #include "swganh/social/social_service.h"
+#include "swganh/weather/weather_service.h"
 
 using namespace anh;
 using namespace anh::app;
@@ -330,6 +331,10 @@ void SwganhApp::LoadCoreServices_()
         kernel_->GetServiceManager()->AddService(
             "SocialService", 
             unique_ptr<social::SocialService>(new social::SocialService(kernel_.get())));
+
+        kernel_->GetServiceManager()->AddService(
+            "WeatherService",
+            unique_ptr<weather::WeatherService>(new weather::WeatherService(kernel_.get())));
 	}
 
 	// always need a galaxy service running
