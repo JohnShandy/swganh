@@ -156,7 +156,7 @@ void WeatherService::onStart()
     clouds.z = 3.0f;
     SetSceneWeather(1, MEDIUMSTORM, clouds);*/
 
+    anh::app::KernelInterface* kernel
 	script_.SetContext("kernel", boost::python::ptr(kernel));
-
 	script_.Run();
 }
