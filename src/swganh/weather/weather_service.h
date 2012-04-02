@@ -64,8 +64,8 @@ namespace weather {
 			Weather weather_type,
 			glm::vec3 cloud_vector);
 
-		boost::python::object operator()(
-			anh::app::KernelInterface* kernel);
+		/*boost::python::object operator()(
+			anh::app::KernelInterface* kernel);*/
 
 	private:
 		void SendServerWeatherMessage_(

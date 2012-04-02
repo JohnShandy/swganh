@@ -125,7 +125,7 @@ void WeatherService::SetSceneWeather(
 	}
 }
 
-boost::python::object WeatherService::operator()(
+/*boost::python::object WeatherService::operator()(
 	anh::app::KernelInterface* kernel)
 {
 	script_.SetContext("kernel", boost::python::ptr(kernel));
@@ -133,7 +133,7 @@ boost::python::object WeatherService::operator()(
 	script_.Run();
 
 	return script_.GetGlobals();
-}
+}*/
 
 void WeatherService::SendServerWeatherMessage_(
 	Weather weather_type,
@@ -150,9 +150,13 @@ void WeatherService::SendServerWeatherMessage_(
 
 void WeatherService::onStart()
 {
-    glm::vec3 clouds;
+    /*glm::vec3 clouds;
     clouds.x = 1.0f;
     clouds.y = 0.2f;
     clouds.z = 3.0f;
-    SetSceneWeather(1, MEDIUMSTORM, clouds);
+    SetSceneWeather(1, MEDIUMSTORM, clouds);*/
+
+	script_.SetContext("kernel", boost::python::ptr(kernel));
+
+	script_.Run();
 }
