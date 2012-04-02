@@ -49,6 +49,20 @@ namespace weather {
 		HEAVYSTORM
 	};
 
+    enum Scene : uint32_t
+    {
+        CORELLIA = 1,
+        DANTOOINE,
+        DATHOMIR,
+        ENDOR,
+        LOK,
+        NABOO,
+        RORI,
+        TALUS,
+        TATOOINE,
+        YAVIN4
+    };
+
 	class WeatherService: public swganh::base::BaseService
 	{
 	public:
