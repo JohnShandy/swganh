@@ -7,6 +7,7 @@
 #include "anh/service/service_manager.h"
 #include "swganh/combat/combat_service.h"
 #include "swganh/social/social_service.h"
+#include "swganh/weather/weather_service.h"
 #include "swganh/simulation/simulation_service.h"
 
 #include <boost/python.hpp>
@@ -41,6 +42,11 @@ void exportSWGANHKernel()
                 return_value_policy<reference_existing_object>(),
                 boost::mpl::vector<swganh::social::SocialService*, anh::service::ServiceManager*>()),
                 "returns an internal refrence of the :class:`.SocialService`")
+        .def("weather_service", make_function(
+               bind(&anh::service::ServiceManager::GetService<swganh::weather::WeatherService>, std::placeholders::_1, "WeatherService"),
+                return_value_policy<reference_existing_object>(),
+                boost::mpl::vector<swganh::weather::WeatherService*, anh::service::ServiceManager*>()),
+                "returns an internal reference of the :class:`.WeatherService`")
        ;
 }
 #endif // SWGANH_APP_SWGANH_KERNEL_BINDING_H_

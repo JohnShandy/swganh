@@ -150,6 +150,13 @@ void WeatherService::SendServerWeatherMessage_(
 
 void WeatherService::onStart()
 {
-    script_.SetContext("kernel", boost::python::ptr(kernel));
-    script_.Run();
+    try
+    {
+        script_.SetContext("kernel", boost::python::ptr(kernel()));
+        script_.Run();
+    }
+    catch (std::exception& e)
+    {
+        LOG(fatal) << e.what();
+    }
 }

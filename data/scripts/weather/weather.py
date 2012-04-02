@@ -1,4 +1,5 @@
 import swgpy.app
+import swgpy.utility.vector3
 import swgpy.weather
 
 service_mgr = kernel.service_manager()
@@ -20,4 +21,4 @@ SCENE = enum(
 			YAVIN4 = 10
 		)
 
-weather_svc.set_scene_weather(SCENE.CORELLIA, WEATHER.HEAVYSTORM, (0.0, 0.0, 0.0))
+weather_svc.set_scene_weather(SCENE.CORELLIA, swgpy.WEATHER.HEAVYSTORM, vector3(0.0, 0.0, 0.0))
