@@ -67,7 +67,7 @@ namespace weather {
     class WeatherEvent
     {
     public:
-        //explicit WeatherEvent();
+        explicit WeatherEvent();
 
         float GetDuration();
         void SetDuration(float seconds);
@@ -83,7 +83,7 @@ namespace weather {
         glm::vec3 cloud_vector;
     };
 
-    typedef std::vector<WeatherEvent> WeatherSequence;
+    //typedef std::vector<WeatherEvent> WeatherSequence;
 
 	class WeatherService: public swganh::base::BaseService
 	{
@@ -102,7 +102,7 @@ namespace weather {
 
 		void RunWeatherSequence(
             uint32_t scene_id,
-            WeatherSequence weather_sequence);
+            std::vector<WeatherEvent> weather_sequence);
 
 	private:
 		void SendServerWeatherMessage_(

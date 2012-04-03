@@ -34,7 +34,7 @@ void exportWeatherService()
         .value("YAVIN4", YAVIN4)
         ;
 
-    class_<WeatherEvent>("weather_event", "Contains the duration, weather type, and cloud vector for a weather event.", no_init)
+    class_<WeatherEvent>("weather_event", "Contains the duration, weather type, and cloud vector for a weather event.")
         .def("getDuration", &WeatherEvent::GetDuration)
         .def("setDuration", &WeatherEvent::SetDuration)
         .def("getWeatherType", &WeatherEvent::GetWeatherType)
@@ -43,9 +43,9 @@ void exportWeatherService()
         .def("setCloudVector", &WeatherEvent::SetCloudVector)
         ;
 
-    class_<WeatherSequence>("weather_sequence", "A vector for WeatherEvent objects which contain duration, weather type, and cloud vector.", no_init)
-        .def(vector_indexing_suite<WeatherSequence>())
-        ;
+    /*class_<std::vector<WeatherEvent>>("weather_sequence", "A vector for WeatherEvent objects which contain duration, weather type, and cloud vector.")
+        .def(vector_indexing_suite<std::vector<WeatherEvent>>())
+        ;*/
 
     class_<WeatherService, shared_ptr<WeatherService>, boost::noncopyable>("WeatherService", "The weather service processes in-game weather features.", no_init)
         .def("get_scene_weather", &WeatherService::GetSceneWeather, "Returns the current weather ID from a specified scene.")

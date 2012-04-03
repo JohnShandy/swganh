@@ -48,9 +48,9 @@ using namespace swganh::weather;
 
 using swganh::app::SwganhKernel;
 
-/*WeatherEvent::WeatherEvent()
+WeatherEvent::WeatherEvent()
 {
-}*/
+}
 
 float WeatherEvent::GetDuration() { return duration; }
 void WeatherEvent::SetDuration(float seconds)
@@ -154,7 +154,7 @@ void WeatherService::SetSceneWeather(
 
 void WeatherService::RunWeatherSequence(
     uint32_t scene_id,
-    WeatherSequence weather_sequence)
+    std::vector<WeatherEvent> weather_sequence)
 {
     for_each(weather_sequence.begin(), weather_sequence.end(), [=] (WeatherEvent weather_event) {
         auto start = time(NULL);
