@@ -1,8 +1,11 @@
 #ifndef SWGANH_WEATHER_WEATHER_SERVICE_BINDING_H_
 #define SWGANH_WEATHER_WEATHER_SERVICE_BINDING_H_
 
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <glm/glm.hpp>
+
 #include "anh/python_shared_ptr.h"
-#include "weather_service.h"
+#include "swganh/weather/weather_service.h"
 
 using namespace swganh::weather;
 using namespace boost::python;
@@ -29,6 +32,19 @@ void exportWeatherService()
         .value("TALUS", TALUS)
         .value("TATOOINE", TATOOINE)
         .value("YAVIN4", YAVIN4)
+        ;
+
+    class_<WeatherEvent>("weather_event", "Contains the duration, weather type, and cloud vector for a weather event.", no_init)
+        .def("getDuration", &WeatherEvent::GetDuration)
+        .def("setDuration", &WeatherEvent::SetDuration)
+        .def("getWeatherType", &WeatherEvent::GetWeatherType)
+        .def("setWeatherType", &WeatherEvent::SetWeatherType)
+        .def("getCloudVector", &WeatherEvent::GetCloudVector)
+        .def("setCloudVector", &WeatherEvent::SetCloudVector)
+        ;
+
+    class_<WeatherSequence>("weather_sequence", "A vector for WeatherEvent objects which contain duration, weather type, and cloud vector.", no_init)
+        .def(vector_indexing_suite<WeatherSequence>())
         ;
 
     class_<WeatherService, shared_ptr<WeatherService>, boost::noncopyable>("WeatherService", "The weather service processes in-game weather features.", no_init)

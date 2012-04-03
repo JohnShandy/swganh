@@ -23,6 +23,7 @@
 
 #include <cstdint>
 #include <glm/glm.hpp>
+#include <list>
 #include <memory>
 
 #include "anh/app/kernel_interface.h"
@@ -63,6 +64,27 @@ namespace weather {
         YAVIN4
     };
 
+    class WeatherEvent
+    {
+    public:
+        //explicit WeatherEvent();
+
+        float GetDuration();
+        void SetDuration(float seconds);
+
+        Weather GetWeatherType();
+        void SetWeatherType(Weather w);
+
+        glm::vec3 GetCloudVector();
+        void SetCloudVector(glm::vec3 cloud_vector);
+    private:
+        float duration;
+        Weather weather_type;
+        glm::vec3 cloud_vector;
+    };
+
+    typedef std::vector<WeatherEvent> WeatherSequence;
+
 	class WeatherService: public swganh::base::BaseService
 	{
 	public:
@@ -78,8 +100,9 @@ namespace weather {
 			Weather weather_type,
 			glm::vec3 cloud_vector);
 
-		boost::python::object operator()(
-			anh::app::KernelInterface* kernel);
+		void RunWeatherSequence(
+            uint32_t scene_id,
+            WeatherSequence weather_sequence);
 
 	private:
 		void SendServerWeatherMessage_(

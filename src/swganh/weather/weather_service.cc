@@ -20,6 +20,9 @@
 
 #include "swganh/weather/weather_service.h"
 
+#include <algorithm>
+#include <ctime>
+
 #include <cppconn/exception.h>
 #include <cppconn/connection.h>
 #include <cppconn/prepared_statement.h>
@@ -44,6 +47,30 @@ using namespace swganh::simulation;
 using namespace swganh::weather;
 
 using swganh::app::SwganhKernel;
+
+/*WeatherEvent::WeatherEvent()
+{
+}*/
+
+float WeatherEvent::GetDuration() { return duration; }
+void WeatherEvent::SetDuration(float seconds)
+{
+    duration = seconds;
+}
+
+Weather WeatherEvent::GetWeatherType() { return weather_type; }
+void WeatherEvent::SetWeatherType(Weather weather)
+{
+    weather_type = weather;
+}
+
+glm::vec3 WeatherEvent::GetCloudVector() { return cloud_vector; }
+void WeatherEvent::SetCloudVector(glm::vec3 vector)
+{
+    cloud_vector.x = vector.x;
+    cloud_vector.y = vector.y;
+    cloud_vector.z = vector.z;
+}
 
 WeatherService::WeatherService(SwganhKernel* kernel) : BaseService(kernel), script_("scripts/weather/weather.py")
 {
@@ -125,14 +152,22 @@ void WeatherService::SetSceneWeather(
 	}
 }
 
-boost::python::object WeatherService::operator()(
-	anh::app::KernelInterface* kernel)
+void WeatherService::RunWeatherSequence(
+    uint32_t scene_id,
+    WeatherSequence weather_sequence)
 {
-	script_.SetContext("kernel", boost::python::ptr(kernel));
-
-	script_.Run();
-
-	return script_.GetGlobals();
+    for_each(weather_sequence.begin(), weather_sequence.end(), [=] (WeatherEvent weather_event) {
+        auto start = time(NULL);
+        while (start)
+        {
+            auto elapsed = time(NULL) - start;
+            if (elapsed == weather_event.GetDuration())
+            {
+                SetSceneWeather(scene_id, weather_event.GetWeatherType(), weather_event.GetCloudVector());
+                break;
+            }
+        }
+    });
 }
 
 void WeatherService::SendServerWeatherMessage_(
