@@ -48,8 +48,13 @@ using namespace swganh::weather;
 
 using swganh::app::SwganhKernel;
 
-WeatherEvent::WeatherEvent()
+WeatherEvent::WeatherEvent(float seconds, Weather weather, glm::vec3 vector)
 {
+    duration = seconds;
+    weather_type = weather;
+    cloud_vector.x = vector.x;
+    cloud_vector.y = vector.y;
+    cloud_vector.z = vector.z;
 }
 
 float WeatherEvent::GetDuration() { return duration; }
@@ -157,13 +162,13 @@ void WeatherService::RunWeatherSequence(
     std::vector<WeatherEvent> weather_sequence)
 {
     for_each(weather_sequence.begin(), weather_sequence.end(), [=] (WeatherEvent weather_event) {
+        SetSceneWeather(scene_id, weather_event.GetWeatherType(), weather_event.GetCloudVector());
         auto start = time(NULL);
         while (start)
         {
             auto elapsed = time(NULL) - start;
             if (elapsed == weather_event.GetDuration())
             {
-                SetSceneWeather(scene_id, weather_event.GetWeatherType(), weather_event.GetCloudVector());
                 break;
             }
         }

@@ -67,23 +67,27 @@ namespace weather {
     class WeatherEvent
     {
     public:
-        WeatherEvent();
+        WeatherEvent(float seconds, Weather weather, glm::vec3 vector);
 
         float GetDuration();
         void SetDuration(float seconds);
 
         Weather GetWeatherType();
-        void SetWeatherType(Weather w);
+        void SetWeatherType(Weather weather);
 
         glm::vec3 GetCloudVector();
-        void SetCloudVector(glm::vec3 cloud_vector);
+        void SetCloudVector(glm::vec3 vector);
+
+        bool operator==(WeatherEvent other)
+        {
+            return weather_type == other.weather_type;
+        }
+
     private:
         float duration;
         Weather weather_type;
         glm::vec3 cloud_vector;
     };
-
-    //typedef std::vector<WeatherEvent> WeatherSequence;
 
 	class WeatherService: public swganh::base::BaseService
 	{
