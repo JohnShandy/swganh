@@ -23,7 +23,7 @@
 
 #include <cstdint>
 #include <glm/glm.hpp>
-#include <list>
+#include <vector>
 #include <memory>
 
 #include "anh/app/kernel_interface.h"
@@ -67,7 +67,7 @@ namespace weather {
     class WeatherEvent
     {
     public:
-        explicit WeatherEvent();
+        WeatherEvent();
 
         float GetDuration();
         void SetDuration(float seconds);

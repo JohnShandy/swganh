@@ -1,6 +1,8 @@
 #ifndef SWGANH_WEATHER_WEATHER_SERVICE_BINDING_H_
 #define SWGANH_WEATHER_WEATHER_SERVICE_BINDING_H_
 
+#include <string>
+#include <vector>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <glm/glm.hpp>
 
@@ -34,22 +36,23 @@ void exportWeatherService()
         .value("YAVIN4", YAVIN4)
         ;
 
-    class_<WeatherEvent>("weather_event", "Contains the duration, weather type, and cloud vector for a weather event.")
+    /*class_<WeatherEvent>("weather_event", "Contains the duration, weather type, and cloud vector for a weather event.")
         .def("getDuration", &WeatherEvent::GetDuration)
         .def("setDuration", &WeatherEvent::SetDuration)
         .def("getWeatherType", &WeatherEvent::GetWeatherType)
         .def("setWeatherType", &WeatherEvent::SetWeatherType)
         .def("getCloudVector", &WeatherEvent::GetCloudVector)
         .def("setCloudVector", &WeatherEvent::SetCloudVector)
-        ;
-
-    /*class_<std::vector<WeatherEvent>>("weather_sequence", "A vector for WeatherEvent objects which contain duration, weather type, and cloud vector.")
-        .def(vector_indexing_suite<std::vector<WeatherEvent>>())
         ;*/
+
+    class_<std::vector<int> >("weather_sequence", "A vector for WeatherEvent objects which contain duration, weather type, and cloud vector.")
+        .def(vector_indexing_suite<std::vector<int>, true >())
+        ;
 
     class_<WeatherService, shared_ptr<WeatherService>, boost::noncopyable>("WeatherService", "The weather service processes in-game weather features.", no_init)
         .def("get_scene_weather", &WeatherService::GetSceneWeather, "Returns the current weather ID from a specified scene.")
         .def("set_scene_weather", &WeatherService::SetSceneWeather, "Sets the weather ID on a specified scene and broadcasts a ServerWeatherMessage to all players on that scene.")
+        .def("run_weather_sequence", &WeatherService::RunWeatherSequence, "Runs a weather_sequence on a specified scene.")
         ;
 }
 
