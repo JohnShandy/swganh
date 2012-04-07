@@ -168,9 +168,7 @@ void WeatherService::RunWeatherSequence(
         {
             auto elapsed = time(NULL) - start;
             if (elapsed == weather_event.GetDuration())
-            {
                 break;
-            }
         }
     });
 }
@@ -188,7 +186,7 @@ void WeatherService::SendServerWeatherMessage_(
     simulation_service_->SendToAllInScene(server_weather_message, scene_id);
 }
 
-void WeatherService::onStart()
+void WeatherService::ExecuteWeatherScript_()
 {
     try
     {
@@ -198,5 +196,19 @@ void WeatherService::onStart()
     catch (std::exception& e)
     {
         LOG(fatal) << e.what();
+    }
+}
+
+void WeatherService::onStart()
+{
+    auto start = time(NULL);
+    while (start)
+    {
+        auto elapsed = time(NULL) - start;
+        if (elapsed >= 300.0f)
+        {
+            ExecuteWeatherScript_();
+            break;
+        }
     }
 }

@@ -116,6 +116,8 @@ namespace weather {
 
 		swganh::scripting::PythonScript script_;
 
+        void ExecuteWeatherScript_();
+
 		void onStart();
 
 		swganh::simulation::SimulationService* simulation_service_;
