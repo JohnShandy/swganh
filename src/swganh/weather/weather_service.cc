@@ -48,35 +48,6 @@ using namespace swganh::weather;
 
 using swganh::app::SwganhKernel;
 
-WeatherEvent::WeatherEvent(float seconds, Weather weather, glm::vec3 vector)
-{
-    duration = seconds;
-    weather_type = weather;
-    cloud_vector.x = vector.x;
-    cloud_vector.y = vector.y;
-    cloud_vector.z = vector.z;
-}
-
-float WeatherEvent::GetDuration() { return duration; }
-void WeatherEvent::SetDuration(float seconds)
-{
-    duration = seconds;
-}
-
-Weather WeatherEvent::GetWeatherType() { return weather_type; }
-void WeatherEvent::SetWeatherType(Weather weather)
-{
-    weather_type = weather;
-}
-
-glm::vec3 WeatherEvent::GetCloudVector() { return cloud_vector; }
-void WeatherEvent::SetCloudVector(glm::vec3 vector)
-{
-    cloud_vector.x = vector.x;
-    cloud_vector.y = vector.y;
-    cloud_vector.z = vector.z;
-}
-
 WeatherService::WeatherService(SwganhKernel* kernel) : BaseService(kernel), script_("scripts/weather/weather.py")
 {
 }
@@ -95,8 +66,7 @@ ServiceDescription WeatherService::GetServiceDescription()
 	return service_description;
 }
 
-Weather WeatherService::GetSceneWeather(
-	uint32_t scene_id)
+Weather WeatherService::GetSceneWeather(uint32_t scene_id)
 {
 	Weather weather_type;
 	string scene_name;
@@ -116,8 +86,6 @@ Weather WeatherService::GetSceneWeather(
 			weather_type = Weather(result->getUInt("weather_id"));
 			scene_name = result->getString("name");
 		}
-
-		LOG(info) << "Retrieved (" << weather_type << ") from " << scene_name;
 	}
 	catch (sql::SQLException& e)
 	{
@@ -147,8 +115,6 @@ void WeatherService::SetSceneWeather(
 		statement->executeUpdate();
 
         SendServerWeatherMessage_(weather_type, cloud_vector, scene_id);
-
-		LOG(info) << "Set weather on scene " << scene_id << " to " << weather_type;
 	}
 	catch (sql::SQLException& e)
 	{

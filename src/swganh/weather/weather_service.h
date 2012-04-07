@@ -21,6 +21,8 @@
 #ifndef SWGANH_WEATHER_WEATHER_SERVICE_H_
 #define SWGANH_WEATHER_WEATHER_SERVICE_H_
 
+#include "swganh/weather/weather_data.h"
+
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <vector>
@@ -41,54 +43,6 @@ namespace simulation {
 namespace swganh {
 namespace weather {
 
-	enum Weather : uint32_t
-	{
-		NOSTORM,
-		CLOUDY,
-		LIGHTSTORM,
-		MEDIUMSTORM,
-		HEAVYSTORM
-	};
-
-    enum Scene : uint32_t
-    {
-        CORELLIA = 1,
-        DANTOOINE,
-        DATHOMIR,
-        ENDOR,
-        LOK,
-        NABOO,
-        RORI,
-        TALUS,
-        TATOOINE,
-        YAVIN4
-    };
-
-    class WeatherEvent
-    {
-    public:
-        WeatherEvent(float seconds, Weather weather, glm::vec3 vector);
-
-        float GetDuration();
-        void SetDuration(float seconds);
-
-        Weather GetWeatherType();
-        void SetWeatherType(Weather weather);
-
-        glm::vec3 GetCloudVector();
-        void SetCloudVector(glm::vec3 vector);
-
-        bool operator==(WeatherEvent other)
-        {
-            return weather_type == other.weather_type;
-        }
-
-    private:
-        float duration;
-        Weather weather_type;
-        glm::vec3 cloud_vector;
-    };
-
 	class WeatherService: public swganh::base::BaseService
 	{
 	public:
@@ -96,8 +50,7 @@ namespace weather {
 
 		anh::service::ServiceDescription GetServiceDescription();
 
-		Weather GetSceneWeather(
-			uint32_t scene_id);
+		Weather GetSceneWeather(uint32_t scene_id);
 		
 		void SetSceneWeather(
 			uint32_t scene_id,
